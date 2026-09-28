@@ -1,6 +1,6 @@
 # Development
 
-Scripts (from `package.json`): `dev`, `build`, `build:dev`, `preview`, `lint`, `format`.
+Scripts (from `package.json`): `dev`, `build`, `build:dev`, `preview`, `lint`, `format`. Setup steps are in the main README.
 
 ```bash
 npm install
