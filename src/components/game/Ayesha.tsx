@@ -3,8 +3,10 @@ import { LANGS } from "../../locales/resources";
 import { useMissionStore } from "../../stores/mission-store";
 import { useVoice, VoiceBar } from "./voice";
 
-export function AyeshaAvatar() {
-  return <svg className="mf-ayesha-avatar" viewBox="0 0 48 48" aria-hidden><circle cx="24" cy="24" r="24" fill="#0f3a78" /><circle cx="24" cy="19" r="8" fill="#e6c2a0" /><path d="M14 17a10 10 0 0 1 20 0v3c-2-4-6-6-10-6s-8 2-10 6z" fill="#1c1410" /><path d="M9 44c2-9 8-13 15-13s13 4 15 13" fill="#dfeaff" /><circle cx="24" cy="36" r="2" fill="#1677ff" /></svg>;
+import mentorDoctorImg from "../../assets/mentor-doctor.jpg";
+
+export function AyeshaAvatar({ className = "mf-ayesha-avatar", alt = "Dr. Ayesha" }: { className?: string; alt?: string }) {
+  return <img src={mentorDoctorImg} alt={alt} className={className} loading="lazy" />;
 }
 
 // Contextual guide (§8): appears once per phase where a decision matters, never permanently on screen.

@@ -6,6 +6,7 @@ import { ENGINES } from "../../lib/mission-sim";
 import { LANGS } from "../../locales/resources";
 import { useMissionStore } from "../../stores/mission-store";
 import { AyeshaAvatar } from "./Ayesha";
+import mentorDoctorImg from "../../assets/mentor-doctor.jpg";
 import { useVoice, VoiceBar } from "./voice";
 
 const G0 = 9.80665;
@@ -65,19 +66,51 @@ export function LearnLab() {
   if (!s.learn) return null;
   const rtl = LANGS.find((l) => l.id === s.lang && "rtl" in l);
   const steps = t("ui.steps", { returnObjects: true }) as string[];
-  const text = !id ? t(`ui.learn.pick`) : step === 0 ? `${t(`concepts.${id}.ayesha`)} ${t(`concepts.${id}.simple`)}` : step === 1 ? t(`concepts.${id}.demo`) : step === 2 ? t(`concepts.${id}.interactive`) : step === 3 ? t(`concepts.${id}.science`) : step === 4 ? t(`concepts.${id}.formulaNote`) : step === 5 ? t(`concepts.${id}.q`) : t("ui.learn.source");
+  const text = !id ? `${t("ui.learn.mentorGreeting")} ${t("ui.learn.pick")}` : step === 0 ? `${t(`concepts.${id}.ayesha`)} ${t(`concepts.${id}.simple`)}` : step === 1 ? t(`concepts.${id}.demo`) : step === 2 ? t(`concepts.${id}.interactive`) : step === 3 ? t(`concepts.${id}.science`) : step === 4 ? t(`concepts.${id}.formulaNote`) : step === 5 ? t(`concepts.${id}.q`) : t("ui.learn.source");
   return (
     <div className="mf-learn" dir={rtl ? "rtl" : "ltr"} role="dialog" aria-label={t("ui.learn.title")}>
       <header><h2>{t("ui.learn.title")}</h2><button className="mf-icon" onClick={() => { voice.stop(); s.set({ learn: null }); }} aria-label={t("ui.learn.close")}><X size={22} /></button></header>
       {!id ? <>
+        <div className="mf-learn-mentor-card">
+          <div className="mf-mentor-portrait-wrap">
+            <img src={mentorDoctorImg} alt={t("ui.ayesha.name")} className="mf-mentor-portrait-figure" />
+            <span className="mf-mentor-badge-online">ONLINE</span>
+          </div>
+          <div className="mf-mentor-info">
+            <span className="mf-mentor-tag">{t("ui.learn.mentorTitle")}</span>
+            <h3 className="mf-mentor-name">{t("ui.ayesha.name")}</h3>
+            <p className="mf-mentor-quote">{t("ui.learn.mentorGreeting")}</p>
+          </div>
+        </div>
         <p className="mf-lead">{t("ui.learn.pick")}</p>
         <div className="mf-concepts">{IDS.map((c) => <button key={c} onClick={() => s.set({ learn: c })}><b>{t(`concepts.${c}.title`)}</b><span>{t(`concepts.${c}.simple`)}</span></button>)}</div>
+        <VoiceBar text={text} voice={voice} />
       </> : <>
         <button className="mf-link" onClick={() => s.set({ learn: "index" })}><ArrowLeft size={16} />{t("ui.learn.back")}</button>
-        <h3>{t(`concepts.${id}.title`)}</h3>
+        <div className="mf-mentor-concept-header">
+          <h3>{t(`concepts.${id}.title`)}</h3>
+          <div className="mf-mentor-chip">
+            <AyeshaAvatar className="mf-mentor-chip-avatar" />
+            <span>{t("ui.ayesha.name")}</span>
+          </div>
+        </div>
         <div className="mf-steps">{steps.map((x, i) => <button key={x} aria-label={x} className={i === step ? "on" : i < step ? "done" : ""} onClick={() => setStep(i)} />)}</div>
         <p className="mf-step-label">{t("ui.learn.step", { n: step + 1 })} · {steps[step]}</p>
-        {step === 0 && <div className="mf-ayesha-inline"><AyeshaAvatar /><p>{t(`concepts.${id}.ayesha`)}</p></div>}
+        {step === 0 && (
+          <div className="mf-mentor-concept-hero">
+            <div className="mf-mentor-hero-avatar">
+              <img src={mentorDoctorImg} alt={t("ui.ayesha.name")} className="mf-mentor-figure-circle" />
+              <span className="mf-mentor-badge-online">MENTOR</span>
+            </div>
+            <div className="mf-mentor-speech-bubble">
+              <div className="mf-mentor-header-mini">
+                <b>{t("ui.ayesha.name")}</b>
+                <small>{t("ui.ayesha.role")}</small>
+              </div>
+              <p>{t(`concepts.${id}.ayesha`)}</p>
+            </div>
+          </div>
+        )}
         {step === 0 && <p className="mf-body">{t(`concepts.${id}.simple`)}</p>}
         {step === 1 && <><Demo id={id} /><p className="mf-body">{t(`concepts.${id}.demo`)}</p></>}
         {step === 2 && <><p className="mf-body">{t(`concepts.${id}.interactive`)}</p><Interactive id={id} /></>}

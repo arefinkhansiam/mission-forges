@@ -302,7 +302,29 @@
 .mf-caption { font-size:16px; margin:8px 0 0; color:#fff; }
 .mf-ayesha-inline { display:flex; gap:12px; align-items:center; background:#0b2244; border-radius:12px; padding:10px; }
 .mf-ayesha-inline p { margin:0; font-size:16px; font-style:italic; }
-.mf-ayesha-avatar { width:48px; height:48px; flex:none; }
+.mf-ayesha-avatar { width:48px; height:48px; flex:none; border-radius:50%; object-fit:cover; border:2px solid #3b82f6; box-shadow:0 0 10px #1677ff66; display:block; }
+.mf-learn-mentor-card { display:flex; align-items:center; gap:20px; background:linear-gradient(135deg,rgba(14,42,82,0.92) 0%,rgba(6,22,49,0.96) 100%); border:1px solid rgba(109,193,255,0.3); border-radius:16px; padding:18px 22px; margin:14px 0 20px; box-shadow:0 8px 32px rgba(0,0,0,0.45),inset 0 0 24px rgba(22,119,255,0.12); position:relative; overflow:hidden; }
+.mf-learn-mentor-card::after { content:""; position:absolute; top:-40px; right:-40px; width:150px; height:150px; background:radial-gradient(circle,rgba(59,130,246,0.18) 0%,transparent 70%); pointer-events:none; }
+.mf-mentor-portrait-wrap { position:relative; flex:none; }
+.mf-mentor-portrait-figure { width:100px; height:100px; border-radius:18px; object-fit:cover; border:2px solid #6dc1ff; box-shadow:0 0 24px rgba(109,193,255,0.45); display:block; background:#0b2244; }
+.mf-mentor-badge-online { position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); background:#071a33; border:1px solid #10b981; color:#34d399; font-size:10px; font-weight:700; letter-spacing:0.08em; padding:1px 8px; border-radius:999px; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,0.5); }
+.mf-mentor-info { display:flex; flex-direction:column; gap:4px; }
+.mf-mentor-tag { font-size:11px; font-weight:600; letter-spacing:0.15em; color:#6dc1ff; text-transform:uppercase; }
+.mf-mentor-name { font-size:22px; font-weight:700; margin:0; color:#ffffff; }
+.mf-mentor-quote { font-size:15px; color:#b9d2f0; line-height:1.45; margin:3px 0 0; font-style:italic; }
+.mf-mentor-concept-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:4px 0 8px; }
+.mf-mentor-concept-header h3 { margin:0; }
+.mf-mentor-chip { display:inline-flex; align-items:center; gap:8px; background:rgba(15,42,82,0.85); border:1px solid rgba(109,193,255,0.25); border-radius:999px; padding:4px 12px 4px 4px; font-size:13px; color:#9fd6ff; }
+.mf-mentor-chip-avatar { width:26px; height:26px; border-radius:50%; object-fit:cover; border:1.5px solid #6dc1ff; display:block; }
+.mf-mentor-concept-hero { display:flex; align-items:flex-start; gap:16px; background:linear-gradient(135deg,rgba(11,34,68,0.92) 0%,rgba(6,22,49,0.96) 100%); border:1px solid rgba(109,193,255,0.28); border-radius:14px; padding:14px 18px; margin:12px 0 16px; box-shadow:0 6px 24px rgba(0,0,0,0.35); }
+.mf-mentor-hero-avatar { position:relative; flex:none; }
+.mf-mentor-figure-circle { width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #6dc1ff; box-shadow:0 0 16px rgba(109,193,255,0.4); display:block; background:#0b2244; }
+.mf-mentor-speech-bubble { flex:1; }
+.mf-mentor-speech-bubble .mf-mentor-header-mini { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+.mf-mentor-speech-bubble .mf-mentor-header-mini b { font-size:15px; color:#9fd6ff; }
+.mf-mentor-speech-bubble .mf-mentor-header-mini small { font-size:12px; color:#7fa4d4; }
+.mf-mentor-speech-bubble p { margin:0; font-size:15px; line-height:1.45; font-style:italic; color:#e2eeff; }
+@media (max-width:640px) { .mf-learn-mentor-card { flex-direction:column; text-align:center; gap:12px; padding:16px; } .mf-mentor-info { align-items:center; } .mf-mentor-portrait-figure { width:84px; height:84px; } }
 .mf-ayesha { position:absolute; z-index:35; inset-inline-end:3%; bottom:4%; width:min(360px,94%); background:#061631f2; color:#eef5ff; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; font-size:15px; box-shadow:0 10px 40px #0008; }
 .mf-ayesha-head { display:flex; gap:10px; align-items:center; } .mf-ayesha-head small { display:block; color:#8fb6e6; font-size:14px; }
 /* Readable-text floor (§3). */
