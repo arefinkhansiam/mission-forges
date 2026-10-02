@@ -1,14 +1,14 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { Billboard, Line, OrbitControls, Stars } from "@react-three/drei";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OC } from "three-stdlib";
 import { BODIES, PLANET_ORDER, visRadius, visSize, type BodyId } from "../../lib/nasa-data";
 import { analyze, MISSIONS } from "../../lib/mission-sim";
 import { designOf, useMissionStore } from "../../stores/mission-store";
 import { Spacecraft, Flame } from "./Spacecraft";
-import earthAsset from "../../assets/nasa-earth-blue-marble.jpg.asset.json";
 import { bodyVisPos, nearestBody, pathAU, pathPoint, rt, useTick } from "./runtime";
+import { getNasaPlanetTexture } from "../../lib/nasa-3d-registry";
 
 function rng(seed: number) { let s = seed; return () => ((s = (s * 16807) % 2147483647) / 2147483647); }
 
@@ -23,6 +23,45 @@ function planetTexture(id: BodyId) {
     g.fillStyle = "#1d4fa8"; g.fillRect(0, 0, 512, 256);
     for (let i = 0; i < 70; i++) { g.fillStyle = r() > 0.35 ? "#3c7d3f" : "#9a8657"; g.globalAlpha = 0.9; g.beginPath(); g.ellipse(r() * 512, 40 + r() * 176, 10 + r() * 40, 6 + r() * 24, r() * 3, 0, 7); g.fill(); }
     g.fillStyle = "#f4f7fb"; g.fillRect(0, 0, 512, 14); g.fillRect(0, 242, 512, 14);
+  } else if (id === "Venus") {
+    g.fillStyle = "#e3c48d"; g.fillRect(0, 0, 512, 256);
+    for (let y = 0; y < 256; y += 3 + r() * 7) {
+      g.fillStyle = r() > 0.4 ? "#b58f55" : "#faecd0";
+      g.globalAlpha = 0.2 + r() * 0.3;
+      g.beginPath();
+      g.ellipse(256 + Math.sin(y * 0.04) * 45, y, 280, 5 + r() * 6, 0.05, 0, 7);
+      g.fill();
+    }
+  } else if (id === "Mercury") {
+    g.fillStyle = "#8c837b"; g.fillRect(0, 0, 512, 256);
+    for (let i = 0; i < 300; i++) {
+      g.fillStyle = r() > 0.5 ? "#b8b1a8" : "#5a544f";
+      g.globalAlpha = 0.08 + r() * 0.3;
+      g.beginPath();
+      g.arc(r() * 512, r() * 256, 1 + r() * 12, 0, 7);
+      g.fill();
+    }
+    g.fillStyle = "#e4ded6"; g.globalAlpha = 0.6; g.beginPath(); g.arc(210, 120, 7, 0, 7); g.fill();
+  } else if (id === "Europa") {
+    g.fillStyle = "#dfd7cb"; g.fillRect(0, 0, 512, 256);
+    g.strokeStyle = "#8b5940"; g.lineWidth = 2;
+    for (let i = 0; i < 35; i++) {
+      g.globalAlpha = 0.3 + r() * 0.45;
+      g.beginPath();
+      g.moveTo(r() * 512, r() * 256);
+      g.quadraticCurveTo(r() * 512, r() * 256, r() * 512, r() * 256);
+      g.stroke();
+    }
+  } else if (id === "Titan") {
+    g.fillStyle = "#e09f3e"; g.fillRect(0, 0, 512, 256);
+    for (let y = 0; y < 256; y += 4 + r() * 8) {
+      g.fillStyle = r() > 0.4 ? "#a6681c" : "#f5bc62";
+      g.globalAlpha = 0.2 + r() * 0.25;
+      g.fillRect(0, y, 512, 3 + r() * 10);
+    }
+    g.fillStyle = "#261909"; g.globalAlpha = 0.6;
+    g.beginPath(); g.ellipse(280, 40, 50, 20, 0, 0, 7); g.fill();
+    g.beginPath(); g.ellipse(210, 220, 45, 18, 0, 0, 7); g.fill();
   } else {
     for (let i = 0; i < 260; i++) { g.fillStyle = r() > 0.5 ? b.color2 : "#ffffff"; g.globalAlpha = 0.05 + r() * 0.18; g.beginPath(); g.arc(r() * 512, r() * 256, 1 + r() * 14, 0, 7); g.fill(); }
   }
@@ -31,17 +70,60 @@ function planetTexture(id: BodyId) {
 
 function Planet({ id, focus }: { id: BodyId; focus: boolean }) {
   const ref = useRef<THREE.Group>(null), spin = useRef<THREE.Mesh>(null);
-  const tex = useMemo(() => planetTexture(id), [id]);
-  const earth = useMemo(() => { if (id !== "Earth") return null; const t = new THREE.TextureLoader().load(earthAsset.url); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; }, [id]);
+  const proceduralTex = useMemo(() => planetTexture(id), [id]);
+  const nasaTexturePath = useMemo(() => getNasaPlanetTexture(id), [id]);
+  const [nasaTex, setNasaTex] = useState<THREE.Texture | null>(null);
+
+  useEffect(() => {
+    if (!nasaTexturePath) {
+      setNasaTex(null);
+      return;
+    }
+    let active = true;
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      nasaTexturePath,
+      (t) => {
+        if (!active) return;
+        t.colorSpace = THREE.SRGBColorSpace;
+        t.anisotropy = 4;
+        setNasaTex(t);
+      },
+      undefined,
+      () => {
+        if (active) setNasaTex(null);
+      }
+    );
+    return () => {
+      active = false;
+    };
+  }, [nasaTexturePath]);
+
+  const earthSvg = useMemo(() => {
+    if (id !== "Earth" || nasaTex) return null;
+    const t = new THREE.TextureLoader().load("/images/nasa-earth-blue-marble.svg");
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
+    return t;
+  }, [id, nasaTex]);
+
+  const activeTex = nasaTex ?? earthSvg ?? proceduralTex;
   const size = visSize(id);
+
   useFrame(() => {
     if (ref.current) bodyVisPos(id, rt.days, ref.current.position);
     if (spin.current) spin.current.rotation.y = id === "Earth" ? performance.now() * 0.00012 + rt.days * 0.02 : rt.days * 0.8;
   });
+
   return (
     <group ref={ref}>
-      <mesh ref={spin} rotation-z={id === "Uranus" ? 1.7 : 0.4}><sphereGeometry args={[size, 48, 24]} /><meshStandardMaterial map={earth ?? tex} roughness={0.9} emissive={focus ? "#113a6b" : "#000"} emissiveIntensity={0.4} /></mesh>
+      <mesh ref={spin} rotation-z={id === "Uranus" ? 1.7 : 0.4}>
+        <sphereGeometry args={[size, 48, 24]} />
+        <meshStandardMaterial map={activeTex} roughness={0.9} emissive={focus ? "#113a6b" : "#000"} emissiveIntensity={0.4} />
+      </mesh>
       {id === "Earth" && <mesh scale={1.04}><sphereGeometry args={[size, 32, 16]} /><meshBasicMaterial color="#6fb6ff" transparent opacity={0.16} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>}
+      {id === "Venus" && <mesh scale={1.04}><sphereGeometry args={[size, 32, 16]} /><meshBasicMaterial color="#ffd894" transparent opacity={0.18} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>}
+      {id === "Titan" && <mesh scale={1.05}><sphereGeometry args={[size, 32, 16]} /><meshBasicMaterial color="#5599ff" transparent opacity={0.25} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>}
       {id === "Saturn" && <mesh rotation-x={-Math.PI / 2 + 0.45}><ringGeometry args={[size * 1.3, size * 2.2, 64]} /><meshStandardMaterial color="#d6c49a" transparent opacity={0.7} side={THREE.DoubleSide} /></mesh>}
     </group>
   );
@@ -228,6 +310,8 @@ export function Universe() {
       <Sun />
       {PLANET_ORDER.map((id) => <Planet key={id} id={id} focus={id === target} />)}
       <Planet id="Moon" focus={target === "Moon"} />
+      <Planet id="Europa" focus={target === "Europa"} />
+      <Planet id="Titan" focus={target === "Titan"} />
        {s.phase !== "menu" && PLANET_ORDER.map((id) => <OrbitRing key={id} au={BODIES[id].au} highlight={id === target || id === "Earth"} />)}
        {s.phase !== "menu" && <Belt />}
       {(["missions", "brief", "route", "routePreview", "objectives", "budget", "fuel", "power", "comms", "instruments", "overview"].includes(s.phase) || onPath) && <Trajectory />}

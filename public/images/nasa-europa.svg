@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="europaGlow" cx="40%" cy="36%" r="65%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="35%" stop-color="#dfdcd7" />
+      <stop offset="70%" stop-color="#9a8e80" />
+      <stop offset="90%" stop-color="#544c42" />
+      <stop offset="100%" stop-color="#14110e" />
+    </radialGradient>
+    <clipPath id="europaClip">
+      <circle cx="256" cy="256" r="220" />
+    </clipPath>
+  </defs>
+  <rect width="512" height="512" fill="#040b18" />
+  <!-- Icy Surface -->
+  <circle cx="256" cy="256" r="220" fill="url(#europaGlow)" />
+  <!-- Fractures (Lineae) -->
+  <g clip-path="url(#europaClip)" stroke="#87573f" stroke-width="2.5" fill="none" opacity="0.65">
+    <path d="M 60,140 Q 200,260 460,200" stroke-width="3" />
+    <path d="M 120,80 Q 260,210 440,360" stroke-width="2.8" />
+    <path d="M 40,300 Q 180,240 480,310" stroke-width="2.2" />
+    <path d="M 220,50 Q 250,230 300,480" stroke-width="2.6" />
+    <path d="M 100,220 Q 320,290 410,130" stroke-width="1.8" />
+    <path d="M 170,350 Q 290,390 400,430" stroke-width="2" />
+    <circle cx="240" cy="190" r="14" stroke="#70442e" stroke-width="2" fill="#a4755a" fill-opacity="0.3" />
+    <circle cx="360" cy="300" r="20" stroke="#70442e" stroke-width="2" fill="#a4755a" fill-opacity="0.25" />
+  </g>
+  <!-- Icy rim highlight -->
+  <circle cx="256" cy="256" r="220" stroke="#c8e4ff" stroke-width="3" fill="none" opacity="0.4" />
+</svg>

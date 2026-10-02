@@ -8,15 +8,15 @@ export type NasaResult = { source: NasaSource; live: boolean; cached: boolean; f
 const TTL_HOURS: Record<NasaSource, number> = { apod: 12, neo: 12, donki: 3, epic: 12, mars: 48, images: 168, horizons: 24, sbdb: 168, sentry: 24 };
 
 const DEMO: Record<NasaSource, unknown> = {
-  apod: { title: "The Blue Marble (demo data)", explanation: "Offline sample. Live Astronomy Picture of the Day appears when NASA's service is reachable.", url: null, media_type: "image", date: "2012-01-25" },
+  apod: { title: "The Blue Marble (demo data)", explanation: "Offline sample. Live Astronomy Picture of the Day appears when NASA's service is reachable.", url: "/images/nasa-earth-blue-marble.svg", media_type: "image", date: "2012-01-25" },
   neo: { element_count: 2, objects: [{ name: "(2024 DEMO1)", diameter_m: 140, velocity_kms: 12.4, hazardous: true, miss_km: 4200000 }, { name: "(2024 DEMO2)", diameter_m: 35, velocity_kms: 8.1, hazardous: false, miss_km: 1500000 }] },
-  donki: { events: [{ type: "FLR", classType: "M1.2", time: "demo" }] },
-  epic: { images: [] },
-  mars: { photos: [] },
-  images: { items: [] },
-  horizons: { note: "Using NASA/JPL approximate mean elements (built-in) instead of live Horizons ephemeris." },
+  donki: { events: [{ type: "FLR", classType: "M1.2", time: "demo" }, { type: "CME", classType: "Partial Halo", time: "demo" }] },
+  epic: { images: [{ date: "2024-01-01 12:00:00", caption: "Earth view from DSCOVR EPIC (offline sample)", url: "/images/nasa-earth-blue-marble.svg" }] },
+  mars: { photos: [{ url: "/images/nasa-mars.svg", camera: "Mast Camera (Mastcam)", sol: 3500, date: "2024-01-01" }] },
+  images: { items: [{ title: "Orion Spacecraft Artemis I", center: "JSC", url: "/images/nasa-earth-blue-marble.svg" }] },
+  horizons: { note: "Using NASA/JPL approximate mean elements (built-in) instead of live Horizons ephemeris.", id: "499", date: "2026-10-01", x: 1.38, y: -0.42, z: -0.04 },
   sbdb: { object: { fullname: "1 Ceres (demo)", kind: "dwarf planet" }, elements: { a_au: 2.77, e: 0.0785, i_deg: 10.59 } },
-  sentry: { count: 0, data: [] },
+  sentry: { count: 1, data: [{ des: "99942 Apophis", ip: "0.00000", v_inf: "5.88", year_range: "2029-2103" }] },
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -67,19 +67,43 @@ async function fetchLive(source: NasaSource, arg: string | undefined, key: strin
 export const getNasa = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ source: z.enum(["apod", "neo", "donki", "epic", "mars", "images", "horizons", "sbdb", "sentry"]), arg: z.string().max(60).regex(/^[\w\s.\-()]*$/).optional() }).parse(d))
   .handler(async ({ data }): Promise<NasaResult> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let supabaseAdmin: any = null;
+    try {
+      const mod = await import("@/integrations/supabase/client.server");
+      supabaseAdmin = mod.supabaseAdmin;
+    } catch {
+      // Supabase server client not configured; continue in standalone mode
+    }
+
     const cacheKey = `${data.source}:${data.arg ?? ""}`;
-    const { data: row } = await supabaseAdmin.from("nasa_cache").select("payload,fetched_at").eq("key", cacheKey).maybeSingle();
+    let row: { payload: any; fetched_at: string } | null = null;
+
+    if (supabaseAdmin) {
+      try {
+        const { data: dbRow } = await supabaseAdmin.from("nasa_cache").select("payload,fetched_at").eq("key", cacheKey).maybeSingle();
+        row = dbRow;
+      } catch {
+        row = null;
+      }
+    }
+
     const fresh = row && Date.now() - new Date(row.fetched_at).getTime() < TTL_HOURS[data.source] * 36e5;
     if (row && fresh) return { source: data.source, live: true, cached: true, fetchedAt: row.fetched_at, data: JSON.stringify(row.payload) };
+
     try {
       const payload = await fetchLive(data.source, data.arg, process.env["NASA_API_KEY"] || "DEMO_KEY");
       const fetchedAt = new Date().toISOString();
-      await supabaseAdmin.from("nasa_cache").upsert({ key: cacheKey, payload: payload as never, fetched_at: fetchedAt });
+      if (supabaseAdmin) {
+        try {
+          await supabaseAdmin.from("nasa_cache").upsert({ key: cacheKey, payload: payload as never, fetched_at: fetchedAt });
+        } catch {
+          // Non-fatal cache write failure
+        }
+      }
       return { source: data.source, live: true, cached: false, fetchedAt, data: JSON.stringify(payload) };
     } catch (e) {
-      console.error("NASA fetch failed", data.source, e);
-      if (row) return { source: data.source, live: true, cached: true, fetchedAt: row.fetched_at, data: JSON.stringify(row.payload) };
+      console.warn("NASA live fetch failed, using fallback:", data.source, e);
+      if (row) return { source: data.source, live: false, cached: true, fetchedAt: row.fetched_at, data: JSON.stringify(row.payload) };
       return { source: data.source, live: false, cached: false, fetchedAt: new Date().toISOString(), data: JSON.stringify(DEMO[data.source]) };
     }
   });

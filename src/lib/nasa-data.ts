@@ -13,9 +13,13 @@ export const SOURCES = {
   hubble: "NASA Hubble Space Telescope — Quick Facts",
   jwst: "NASA James Webb Space Telescope — webb.nasa.gov",
   ceres: "NASA Dawn mission / Ceres in Depth — science.nasa.gov",
+  europa: "NASA Europa Clipper mission — science.nasa.gov/mission/europa-clipper",
+  titan: "NASA Dragonfly rotorcraft mission to Titan — dragonfly.jhuapl.edu",
+  hermes: "NASA Glenn — Advanced Electric Propulsion System (AEPS / HERMeS)",
+  aerospike: "NASA Marshall Space Flight Center — Linear Aerospike SR-71 flight experiments",
 };
 
-export type BodyId = "Sun" | "Mercury" | "Venus" | "Earth" | "Moon" | "Mars" | "Ceres" | "Jupiter" | "Saturn" | "Uranus" | "Neptune";
+export type BodyId = "Sun" | "Mercury" | "Venus" | "Earth" | "Moon" | "Mars" | "Europa" | "Titan" | "Ceres" | "Jupiter" | "Saturn" | "Uranus" | "Neptune";
 
 export type Body = {
   id: BodyId; kind: string; diameterKm: number; au: number; periodDays: number; gravity: number;
@@ -30,6 +34,8 @@ export const BODIES: Record<BodyId, Body> = {
   Earth: { id: "Earth", kind: "Terrestrial planet — home", diameterKm: 12756, au: 1.0, periodDays: 365.2, gravity: 9.8, L0: 100.46, color: "#2f6fd6", color2: "#3a8f4a", why: "Mission control: every command and signal starts here.", atmosphere: "thick" },
   Moon: { id: "Moon", kind: "Natural satellite of Earth", diameterKm: 3475, au: 0.00257, periodDays: 27.3, gravity: 1.6, L0: null, color: "#b9b6b0", color2: "#77736d", why: "Artemis destination and proving ground for deep-space systems.", atmosphere: "none" },
   Mars: { id: "Mars", kind: "Terrestrial planet", diameterKm: 6792, au: 1.524, periodDays: 687.0, gravity: 3.7, L0: 355.45, color: "#c1502e", color2: "#8a3a22", why: "Thin atmosphere: parachutes help but cannot land you alone.", atmosphere: "thin" },
+  Europa: { id: "Europa", kind: "Galilean moon of Jupiter", diameterKm: 3122, au: 5.204, periodDays: 3.55, gravity: 1.31, L0: null, color: "#cfc4b2", color2: "#8a6652", why: "Harbors a global saltwater ocean under an ice crust with water vapor plumes.", atmosphere: "none" },
+  Titan: { id: "Titan", kind: "Giant moon of Saturn", diameterKm: 5150, au: 9.573, periodDays: 15.95, gravity: 1.35, L0: null, color: "#e09f3e", color2: "#8c5614", why: "Dense nitrogen atmosphere and methane lakes — destination of NASA's Dragonfly.", atmosphere: "thick" },
   Ceres: { id: "Ceres", kind: "Dwarf planet — main asteroid belt", diameterKm: 939, au: 2.77, periodDays: 1682, gravity: 0.28, L0: null, color: "#8d8a86", color2: "#5f5c59", why: "Visited by NASA's ion-powered Dawn spacecraft (2015–2018).", atmosphere: "none" },
   Jupiter: { id: "Jupiter", kind: "Gas giant", diameterKm: 142984, au: 5.204, periodDays: 4331, gravity: 23.1, L0: 34.4, color: "#d8b48a", color2: "#a26f47", why: "Sunlight is ~4% of Earth's — Juno needs huge solar arrays.", atmosphere: "gas" },
   Saturn: { id: "Saturn", kind: "Gas giant", diameterKm: 120536, au: 9.573, periodDays: 10747, gravity: 9.0, L0: 49.94, color: "#e6d09a", color2: "#b39a62", why: "Cassini relied on RTG power this far from the Sun.", atmosphere: "gas" },

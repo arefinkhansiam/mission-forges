@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="saturnGlow" cx="42%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#fff4da" />
+      <stop offset="25%" stop-color="#ebd2a2" />
+      <stop offset="60%" stop-color="#ab8f5b" />
+      <stop offset="85%" stop-color="#594420" />
+      <stop offset="100%" stop-color="#120c02" />
+    </radialGradient>
+    <clipPath id="saturnGlobeClip">
+      <circle cx="256" cy="256" r="140" />
+    </clipPath>
+  </defs>
+  <rect width="512" height="512" fill="#02040d" />
+  
+  <!-- Back Rings (rendered behind globe) -->
+  <g transform="rotate(-24 256 256)">
+    <!-- Ring C (Inner, faint) -->
+    <ellipse cx="256" cy="256" rx="175" ry="48" fill="none" stroke="#63543b" stroke-width="12" opacity="0.45" />
+    <!-- Ring B (Brightest main ring) -->
+    <ellipse cx="256" cy="256" rx="205" ry="58" fill="none" stroke="#d6be8e" stroke-width="24" opacity="0.85" />
+    <!-- Cassini Division (Gap) -->
+    <ellipse cx="256" cy="256" rx="220" ry="62" fill="none" stroke="#02040d" stroke-width="4" />
+    <!-- Ring A (Outer ring) -->
+    <ellipse cx="256" cy="256" rx="235" ry="66" fill="none" stroke="#ab956c" stroke-width="14" opacity="0.75" />
+  </g>
+
+  <!-- Saturn Planet Globe -->
+  <circle cx="256" cy="256" r="140" fill="url(#saturnGlow)" />
+  
+  <!-- Subtle Atmospheric Banding -->
+  <g clip-path="url(#saturnGlobeClip)" opacity="0.35">
+    <ellipse cx="256" cy="180" rx="150" ry="25" fill="#fcf3df" />
+    <ellipse cx="256" cy="220" rx="150" ry="25" fill="#786035" />
+    <ellipse cx="256" cy="260" rx="150" ry="25" fill="#e8d0a2" />
+    <ellipse cx="256" cy="300" rx="150" ry="25" fill="#7d6335" />
+    <!-- North Polar Hexagon Region -->
+    <circle cx="256" cy="130" r="28" fill="#4d5440" opacity="0.6" />
+  </g>
+
+  <!-- Front Rings (rendered in front of globe with planet shadow) -->
+  <g transform="rotate(-24 256 256)" clip-path="url(#saturnGlobeClip)">
+    <!-- Ring shadow cast onto planet globe -->
+    <ellipse cx="256" cy="268" rx="200" ry="55" fill="none" stroke="#060401" stroke-width="32" opacity="0.65" />
+  </g>
+  <g transform="rotate(-24 256 256)">
+    <!-- Lower half of rings crossing in front of planet -->
+    <path d="M 20,256 C 20,310 492,310 492,256" fill="none" stroke="#ab956c" stroke-width="14" opacity="0.8" />
+    <path d="M 38,256 C 38,300 474,300 474,256" fill="none" stroke="#02040d" stroke-width="4" />
+    <path d="M 52,256 C 52,295 460,295 460,256" fill="none" stroke="#d6be8e" stroke-width="24" opacity="0.9" />
+    <path d="M 80,256 C 80,285 432,285 432,256" fill="none" stroke="#63543b" stroke-width="12" opacity="0.5" />
+  </g>
+</svg>

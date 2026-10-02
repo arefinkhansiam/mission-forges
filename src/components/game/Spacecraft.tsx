@@ -1,7 +1,7 @@
 import { useFrame, type ThreeElements } from "@react-three/fiber";
 import { useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
-import type { Design } from "../../lib/mission-sim";
+import type { Design, EngineId } from "../../lib/mission-sim";
 
 // Orion-inspired stack (crew module + European-style service module with X-wing solar arrays).
 // Axis: nose points +Y. Units: ~1 = 1.6 m.
@@ -56,7 +56,7 @@ function Wing({ angle, deploy, tex }: { angle: number; deploy: number; tex: THRE
   );
 }
 
-export function Flame({ power = 1, length = 1.4, radius = 0.22, y = 0 }: { power?: number; length?: number; radius?: number; y?: number }) {
+export function Flame({ power = 1, length = 1.4, radius = 0.22, y = 0, engine = "chemical" as EngineId }: { power?: number; length?: number; radius?: number; y?: number; engine?: EngineId }) {
   const ref = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
     const g = ref.current; if (!g) return;
@@ -64,10 +64,20 @@ export function Flame({ power = 1, length = 1.4, radius = 0.22, y = 0 }: { power
     g.scale.set(1, Math.max(0.001, power * f), 1);
     g.visible = power > 0.01;
   });
+  const colors = engine === "ion" 
+    ? { outer: "#38bdf8", inner: "#e0f2fe" }
+    : engine === "hall" 
+    ? { outer: "#a855f7", inner: "#38bdf8" }
+    : engine === "aerospike"
+    ? { outer: "#ff6b00", inner: "#fed7aa" }
+    : engine === "nuclear"
+    ? { outer: "#f43f5e", inner: "#e0e7ff" }
+    : { outer: "#ffb35a", inner: "#cfe8ff" };
+
   return (
     <group ref={ref} position-y={y}>
-      <mesh position-y={-length / 2}><coneGeometry args={[radius, length, 20, 1, true]} /><meshBasicMaterial color="#ffb35a" transparent opacity={0.55} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} /></mesh>
-      <mesh position-y={-length * 0.3} rotation-x={Math.PI}><coneGeometry args={[radius * 0.55, length * 0.6, 16, 1, true]} /><meshBasicMaterial color="#cfe8ff" transparent opacity={0.8} blending={THREE.AdditiveBlending} depthWrite={false} /></mesh>
+      <mesh position-y={-length / 2}><coneGeometry args={[radius, length, 20, 1, true]} /><meshBasicMaterial color={colors.outer} transparent opacity={0.65} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} /></mesh>
+      <mesh position-y={-length * 0.3} rotation-x={Math.PI}><coneGeometry args={[radius * 0.55, length * 0.6, 16, 1, true]} /><meshBasicMaterial color={colors.inner} transparent opacity={0.85} blending={THREE.AdditiveBlending} depthWrite={false} /></mesh>
     </group>
   );
 }
@@ -76,7 +86,7 @@ export function Spacecraft({ design, deploy = 1, thrust = 0, variant = "full" }:
   const tex = useMemo(() => solarTexture(), []);
   const engineOffsets = design.engines === 1 ? [0] : design.engines === 2 ? [-0.28, 0.28] : [-0.36, 0, 0.36];
   const wingAngles = Array.from({ length: design.wings }, (_, i) => Math.PI / 4 + (i * Math.PI * 2) / Math.max(design.wings, 1));
-  const ionFlame = design.engine === "ion";
+  const isElectric = design.engine === "ion" || design.engine === "hall";
   return (
     <group>
       {/* Crew module: 57.5° conical capsule */}
@@ -89,7 +99,7 @@ export function Spacecraft({ design, deploy = 1, thrust = 0, variant = "full" }:
           {[0, 1, 2, 3].map((i) => <group key={i} rotation-y={i * Math.PI / 2 + Math.PI / 4}><mesh position={[0.7, -0.15, 0]} rotation-z={0.55} material={mat.steel}><cylinderGeometry args={[0.025, 0.025, 0.7]} /></mesh><mesh position={[0.9, -0.45, 0]} material={mat.dark}><cylinderGeometry args={[0.09, 0.09, 0.03, 16]} /></mesh></group>)}
           <mesh position-y={0} material={mat.foil}><cylinderGeometry args={[0.6, 0.55, 0.22, 8]} /></mesh>
           <mesh position-y={-0.2} material={mat.dark}><cylinderGeometry args={[0.07, 0.17, 0.25, 20, 1, true]} /></mesh>
-          <Flame power={thrust} y={-0.32} length={1.2} radius={0.16} />
+          <Flame power={thrust} y={-0.32} length={1.2} radius={0.16} engine={design.engine} />
         </>
       ) : (
         <>
@@ -106,10 +116,21 @@ export function Spacecraft({ design, deploy = 1, thrust = 0, variant = "full" }:
                 <><mesh position-y={0.05} material={mat.dark}><cylinderGeometry args={[0.2, 0.2, 0.3, 20]} /></mesh><mesh position-y={-0.28} material={mat.steel}><cylinderGeometry args={[0.1, 0.26, 0.45, 24, 1, true]} /></mesh></>
               ) : design.engine === "ion" ? (
                 <mesh position-y={-0.05} material={mat.dark}><cylinderGeometry args={[0.13, 0.13, 0.12, 24]} /></mesh>
+              ) : design.engine === "hall" ? (
+                <group position-y={-0.06}>
+                  <mesh material={mat.dark}><cylinderGeometry args={[0.15, 0.15, 0.12, 24]} /></mesh>
+                  <mesh position-y={-0.06}><ringGeometry args={[0.05, 0.12, 24]} /><meshStandardMaterial color="#818cf8" emissive="#6366f1" emissiveIntensity={0.9} side={THREE.DoubleSide} /></mesh>
+                  <mesh position-y={-0.06} material={mat.steel}><cylinderGeometry args={[0.02, 0.02, 0.03, 12]} /></mesh>
+                </group>
+              ) : design.engine === "aerospike" ? (
+                <group position-y={-0.12}>
+                  <mesh material={mat.dark}><boxGeometry args={[0.28, 0.08, 0.14]} /></mesh>
+                  <mesh position-y={-0.14} rotation-x={Math.PI} material={mat.steel}><coneGeometry args={[0.12, 0.28, 4]} /></mesh>
+                </group>
               ) : (
                 <mesh position-y={-0.2} material={mat.steel}><cylinderGeometry args={[0.07, 0.2, 0.42, 24, 1, true]} /></mesh>
               )}
-              <Flame power={thrust} y={design.engine === "nuclear" ? -0.5 : -0.4} length={ionFlame ? 0.9 : 1.4} radius={ionFlame ? 0.1 : 0.2} />
+              <Flame power={thrust} y={design.engine === "nuclear" ? -0.5 : -0.4} length={isElectric ? 0.9 : 1.4} radius={isElectric ? 0.12 : 0.2} engine={design.engine} />
             </Pop>
           ))}
           {/* Solar array wings */}
@@ -135,6 +156,19 @@ export function Spacecraft({ design, deploy = 1, thrust = 0, variant = "full" }:
             <Pop key={k} position={[Math.sin(i * 2.1 + 2) * 0.66, -0.35 - i * 0.18, Math.cos(i * 2.1 + 2) * 0.66]}>
               <mesh material={k === "radiation" ? mat.red : mat.dark}><boxGeometry args={[0.14, 0.12, 0.14]} /></mesh>
               {k === "camera" && <mesh position-z={0.08} rotation-x={Math.PI / 2} material={mat.window}><cylinderGeometry args={[0.04, 0.04, 0.06, 16]} /></mesh>}
+              {k === "radar" && (
+                <group position-z={0.1}>
+                  <mesh material={mat.steel}><cylinderGeometry args={[0.012, 0.012, 0.45]} /></mesh>
+                  <mesh position-y={0.22} material={mat.foil}><boxGeometry args={[0.22, 0.015, 0.015]} /></mesh>
+                </group>
+              )}
+              {k === "drone" && (
+                <group position-z={0.1} rotation-x={0.25}>
+                  <mesh material={mat.hull}><sphereGeometry args={[0.07, 16, 16]} /></mesh>
+                  <mesh position-y={0.08} material={mat.steel}><cylinderGeometry args={[0.16, 0.16, 0.01, 16]} /></mesh>
+                  <mesh position-y={0.12} material={mat.dark}><cylinderGeometry args={[0.12, 0.12, 0.01, 16]} /></mesh>
+                </group>
+              )}
             </Pop>
           ))}
           {design.battery && <Pop position={[0, -0.95, 0]}><mesh material={mat.dark}><boxGeometry args={[0.5, 0.1, 0.5]} /></mesh></Pop>}

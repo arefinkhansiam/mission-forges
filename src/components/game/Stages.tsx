@@ -7,6 +7,8 @@ import { landingStages, MISSIONS, type Design } from "../../lib/mission-sim";
 import { designOf, useMissionStore } from "../../stores/mission-store";
 import { Flame, Spacecraft } from "./Spacecraft";
 import { rt, useTick } from "./runtime";
+import { Nasa3DModel } from "./Nasa3DModel";
+import { getNasa3DAsset } from "../../lib/nasa-3d-registry";
 
 function Studio() {
   return (
@@ -23,6 +25,8 @@ export function BuildScene() {
   const s = useMissionStore(); const d = designOf(s);
   const ref = useRef<THREE.Group>(null);
   const { camera } = useThree();
+  const nasaAsset = s.nasaModelView ? getNasa3DAsset(s.nasaModelView) : null;
+
   useEffect(() => { camera.position.set(0.55, 1.15, 6.6); camera.lookAt(0.55, 0, 0); }, [camera]);
   useFrame(({ clock }) => { if (ref.current) ref.current.position.y = Math.sin(clock.elapsedTime * 0.8) * 0.05; });
   return (
@@ -33,10 +37,16 @@ export function BuildScene() {
       <ambientLight intensity={0.25} />
       <directionalLight position={[4, 6, 3]} intensity={2.2} color="#e8f2ff" />
       <Stars radius={60} depth={20} count={1500} factor={3} fade />
-      <group ref={ref} rotation-z={0.12}><Spacecraft design={d} deploy={1} /></group>
+      <group ref={ref} rotation-z={nasaAsset ? 0 : 0.12}>
+        {nasaAsset ? (
+          <Nasa3DModel modelUrl={nasaAsset.localPath} targetSize={2.4} autoRotate={false} />
+        ) : (
+          <Spacecraft design={d} deploy={1} />
+        )}
+      </group>
       <mesh position-y={-2.4} rotation-x={-Math.PI / 2}><circleGeometry args={[4, 64]} /><meshStandardMaterial color="#0a1a33" metalness={0.8} roughness={0.35} /></mesh>
       <mesh position-y={-2.39} rotation-x={-Math.PI / 2}><ringGeometry args={[2.6, 2.64, 96]} /><meshBasicMaterial color="#5aaeff" /></mesh>
-       <OrbitControls makeDefault enablePan={false} autoRotate autoRotateSpeed={0.5} minDistance={3} maxDistance={10} target={[0.55, 0, 0]} />
+      <OrbitControls makeDefault enablePan={false} autoRotate autoRotateSpeed={0.5} minDistance={3} maxDistance={10} target={[0.55, 0, 0]} />
     </>
   );
 }
@@ -190,7 +200,7 @@ export function LandingScene() {
   const lander = useRef<THREE.Group>(null), chute = useRef<THREE.Group>(null);
   const tex = useMemo(() => { const c = document.createElement("canvas"); c.width = c.height = 512; const g = c.getContext("2d")!; g.fillStyle = body.color; g.fillRect(0, 0, 512, 512); for (let i = 0; i < 900; i++) { g.fillStyle = i % 3 ? body.color2 : "#ffffff"; g.globalAlpha = 0.05 + Math.random() * 0.15; g.beginPath(); g.arc(Math.random() * 512, Math.random() * 512, 1 + Math.random() * 18, 0, 7); g.fill(); } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(12, 12); t.colorSpace = THREE.SRGBColorSpace; return t; }, [body]);
   const gas = body.atmosphere === "gas";
-  const skyCol = body.atmosphere === "none" ? "#010206" : gas ? body.color2 : body.id === "Mars" ? "#c79a72" : "#8ab8e6";
+  const skyCol = body.atmosphere === "none" ? "#010206" : gas ? body.color2 : body.id === "Mars" ? "#c79a72" : body.id === "Venus" ? "#d49b4b" : body.id === "Titan" ? "#df9336" : "#8ab8e6";
   const { camera } = useThree();
   useEffect(() => { camera.position.set(8, 6, 12); }, [camera]);
   useFrame(({ clock }, raw) => {

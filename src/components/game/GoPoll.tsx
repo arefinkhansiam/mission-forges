@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { getNasa } from "../../lib/nasa.functions";
 import { analyze, LAUNCH_LIMIT } from "../../lib/mission-sim";
 import { designOf, useMissionStore } from "../../stores/mission-store";
+import { sfx } from "../../lib/audio";
 
 type V = "go" | "hold" | "nogo";
 // Stage 7 — Flight Director GO/NO-GO poll. Verdicts derive only from analyze() and live NASA DONKI flares.
@@ -28,14 +29,31 @@ export function GoPoll({ onReady }: { onReady: (ok: boolean) => void }) {
     { k: "prop", v: a.dvMargin < 0 ? "nogo" : a.dvMargin < 0.1 ? "hold" : "go", why: t("ui.poll.prop", { pct: Math.round(a.dvMargin * 100) }) },
     { k: "power", v: a.powerMargin < 0 ? "nogo" : a.powerMargin < 0.15 ? "hold" : "go", why: t("ui.poll.power", { gen: a.generation, draw: a.draw }) },
     { k: "comms", v: d.antennas < 2 ? "hold" : "go", why: t("ui.poll.comms", { n: d.antennas }) },
+    { k: "thermal", v: a.solarFactor > 2.5 && !d.shield ? "hold" : a.solarFactor < 0.05 && d.rtgs === 0 ? "hold" : "go", why: a.solarFactor > 2.5 ? `Intense flux (${a.solarFactor.toFixed(1)}×) — Whipple shield helps heat rejection` : a.solarFactor < 0.05 ? "Deep space chill — RTG thermal baseline recommended" : "Thermal equilibrium nominal" },
     { k: "shield", v: a.hazard > 0.3 && !d.shield ? "hold" : "go", why: t("ui.poll.shield", { pct: Math.round(a.hazard * 100) }) },
     { k: "science", v: a.science === 0 ? "hold" : "go", why: t("ui.poll.science", { n: a.science }) },
     { k: "weather", v: !flare ? "hold" : strong ? "hold" : "go", why: !flare ? t("ui.poll.loading") : flare.cls ? t("ui.poll.weather", { cls: flare.cls }) + (flare.demo ? " · DEMO DATA" : " · NASA DONKI") : t("ui.poll.quiet") },
   ];
   const nogo = rows.some((r) => r.v === "nogo"), holds = rows.filter((r) => r.v === "hold").length;
   const ok = (nogo || holds > 0 ? ack : true) && polled >= rows.length;
-  useEffect(() => { onReady(ok); }, [ok, onReady]);
-  useEffect(() => { setPolled(0); const id = setInterval(() => setPolled((p) => (p >= rows.length ? p : p + 1)), 280); return () => clearInterval(id); }, [rows.length]);
+  useEffect(() => {
+    onReady(ok);
+    if (ok) sfx.success();
+    else if (nogo && polled >= rows.length) sfx.alert();
+  }, [ok, nogo, polled, rows.length, onReady]);
+  useEffect(() => {
+    setPolled(0);
+    const id = setInterval(() => {
+      setPolled((p) => {
+        if (p < rows.length) {
+          sfx.blip();
+          return p + 1;
+        }
+        return p;
+      });
+    }, 280);
+    return () => clearInterval(id);
+  }, [rows.length]);
   return (
     <section className="mf-poll" aria-live="polite">
       <span className="mf-nasa-kicker">{t("ui.poll.title")}</span>

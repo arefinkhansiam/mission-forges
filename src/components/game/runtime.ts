@@ -29,6 +29,16 @@ export function bodyVisPos(id: BodyId, days: number, out = new THREE.Vector3()) 
     const a = moonAngle(days);
     return out.add(new THREE.Vector3(Math.cos(a) * MOON_VIS, 0, -Math.sin(a) * MOON_VIS));
   }
+  if (id === "Europa") {
+    bodyVisPos("Jupiter", days, out);
+    const a = (2 * Math.PI * days) / BODIES.Europa.periodDays;
+    return out.add(new THREE.Vector3(Math.cos(a) * 0.75, 0, -Math.sin(a) * 0.75));
+  }
+  if (id === "Titan") {
+    bodyVisPos("Saturn", days, out);
+    const a = (2 * Math.PI * days) / BODIES.Titan.periodDays;
+    return out.add(new THREE.Vector3(Math.cos(a) * 0.95, 0, -Math.sin(a) * 0.95));
+  }
   const a = bodyAngle(id, days), r = visRadius(BODIES[id].au);
   return out.set(Math.cos(a) * r, 0, -Math.sin(a) * r);
 }
@@ -42,6 +52,16 @@ export function pathPoint(d: Design, t: number, departDays: number, flightDays: 
     const a0 = moonAngle(arrive) - Math.PI * 0.9, a1 = moonAngle(arrive);
     const a = a0 + (a1 - a0) * t, r = 0.34 + (MOON_VIS - 0.34) * (1 - Math.cos(Math.PI * t)) / 2;
     return out.set(e.x + Math.cos(a) * r, Math.sin(Math.PI * t) * 0.08, e.z - Math.sin(a) * r);
+  }
+  if (target === "Europa") {
+    const dest = bodyVisPos("Europa", arrive);
+    const start = bodyVisPos("Earth", departDays);
+    return out.lerpVectors(start, dest, (1 - Math.cos(Math.PI * t)) / 2).add(new THREE.Vector3(0, Math.sin(Math.PI * t) * 0.45, 0));
+  }
+  if (target === "Titan") {
+    const dest = bodyVisPos("Titan", arrive);
+    const start = bodyVisPos("Earth", departDays);
+    return out.lerpVectors(start, dest, (1 - Math.cos(Math.PI * t)) / 2).add(new THREE.Vector3(0, Math.sin(Math.PI * t) * 0.55, 0));
   }
   const s = bodyAngle("Earth", departDays);
   let e = bodyAngle(target, arrive) - s;

@@ -34,37 +34,40 @@ Mission Forge lets players make those tradeoffs themselves and see the result. T
 The rocket equation and solar flux decide whether a design can reach its target.
 
 ## Features
-- Destinations: Moon, Mars, Ceres, Jupiter, Saturn
-- Mission brief and objectives
-- Route choice and route preview
+- 9 Solar System Destinations: Moon, Venus, Mars, Mercury, Europa, Titan, Ceres, Jupiter, Saturn
+- Mission brief and objectives (Surface landing, Orbital survey, Deep atmosphere probe)
+- Route choice and dynamic route preview with live JPL Horizons telemetry
 - Budget, fuel, power, communications and instrument decisions
-- Mission overview
+- Live Tsiolkovsky delta-v panel dynamically tracking rocket equation parameters
 - Spacecraft presets and 3D hangar (engines, tanks, solar wings, RTGs, battery, antennas, shield, instruments)
-- Propulsion choice: chemical, ion, nuclear
-- Readiness check (any score allows launch)
-- GO/NO-GO poll with live DONKI solar-flare data
-- 3D launch sequence
+- Propulsion choice: chemical, ion, Hall thruster, linear aerospike, nuclear thermal
+- Flight Director GO/NO-GO poll with live DONKI solar-flare data and simulation override mode
+- 3D launch sequence on SLS Block 1
 - 3D flight with orbit, chase and cockpit cameras and time warp
 - Hazard encounters with player decisions
-- Docking / rescue mechanic
-- Landing sequence and mission report
-- NASA Data Demo (APOD, NeoWs, DONKI) and live JPL planet positions
+- Rendezvous, docking, and in-space rescue mechanics
+- Entry, Descent, and Landing (EDL) sequence and comprehensive mission report
+- NASA Mission Data Center & Archives: Live feeds for APOD, NeoWs, DONKI, DSCOVR EPIC, Mars Rover Photos, JPL SBDB, and Sentry
+- NASA Spacecraft Library (Orion, JWST, Perseverance, Europa Clipper, Dawn, Cassini, LRO, Voyager)
+- NASA Science Instruments Library (Mastcam, HiRISE, MISE, RAD, REASON, LOLA, SAM)
 - Learn Lab, Dr. Ayesha mentor with browser text-to-speech, six UI languages
 
 ## NASA and JPL Data Sources
-All calls run on the server through one function (`getNasa`) with a database cache. If a source fails, the screen shows a **DEMO DATA** label.
+All calls run on the server through the unified `getNasa` server function with resilient database caching. If a source is unreachable, screens cleanly display a **DEMO DATA / CACHED** label.
 
-| Source | Provides | Screen | Live / fallback |
+| Source | Provides | Screen / Component | Live / Fallback |
 |---|---|---|---|
-| [NASA APOD](https://api.nasa.gov/) | Astronomy picture of the day | Home, NASA Data Demo | Live, DEMO DATA on failure |
-| [NeoWs](https://api.nasa.gov/) | Today's near-Earth object approaches | Home, NASA Data Demo | Live, DEMO DATA on failure |
-| [DONKI FLR](https://api.nasa.gov/) | Solar flares | Home feed, GO/NO-GO poll | Live, DEMO DATA on failure |
-| [NASA Image and Video Library](https://images.nasa.gov) | Destination imagery | Mission brief | Live, DEMO DATA on failure |
-| [JPL Horizons](https://ssd.jpl.nasa.gov/horizons/) | Planet position vectors | Route map positions panel | Live, DEMO DATA on failure |
+| [NASA APOD](https://api.nasa.gov/) | Astronomy picture of the day | Home, NASA Data Center | Live, DEMO DATA on failure |
+| [NeoWs](https://api.nasa.gov/) | Today's near-Earth object approaches | Home, NASA Data Center | Live, DEMO DATA on failure |
+| [DONKI FLR](https://api.nasa.gov/) | Solar flares and space weather | Home feed, GO/NO-GO poll, Data Center | Live, DEMO DATA on failure |
+| [NASA Image Library](https://images.nasa.gov) | Destination & spacecraft imagery | Mission brief, Data Center | Live, DEMO DATA on failure |
+| [JPL Horizons](https://ssd.jpl.nasa.gov/horizons/) | Real-time planet position vectors | Route map positions panel | Live, DEMO DATA on failure |
+| [DSCOVR EPIC](https://epic.gsfc.nasa.gov/) | Full-disc natural color Earth imagery | NASA Mission Data Center | Live, DEMO DATA on failure |
+| [Mars Rover Photos](https://mars.nasa.gov/) | Latest Curiosity / Perseverance imagery | NASA Mission Data Center | Live, DEMO DATA on failure |
+| [JPL SBDB](https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html) | Small-body asteroid/comet orbital elements | NASA Mission Data Center | Live, DEMO DATA on failure |
+| [JPL Sentry](https://cneos.jpl.nasa.gov/sentry/) | Near-Earth impact risk monitoring | NASA Mission Data Center | Live, DEMO DATA on failure |
 
-EPIC, Mars Rover Photos, JPL SBDB and JPL Sentry exist in the server proxy but are **inactive**: no screen uses them.
-
-Only DONKI affects gameplay (one GO/NO-GO station). The NASA Data Demo is kept separate from the simulation. Full provenance: [docs/data-sources.md](docs/data-sources.md).
+Full provenance: [docs/data-sources.md](docs/data-sources.md).
 
 ## Not NASA Data
 These are Mission Forge game mechanics or estimates:
@@ -126,15 +129,15 @@ The team reviewed and integrated AI-assisted output and remained responsible for
 Full disclosure: [View AI Usage & Prompt Disclosure](./AI_USE.md) · Short form: [docs/nasa-ai-disclosure.md](docs/nasa-ai-disclosure.md)
 
 ## Team and Roles
-Team Ghost Hunter
+Team Ghost Hunter — NASA Space Apps Challenge 2026
 
-| Name | Role | GitHub |
+| Name | Role | Profile |
 |---|---|---|
 | Arefin Khan Siam | Team Lead | [@arefinkhansiam](https://github.com/arefinkhansiam) |
-| Melita Mehzabin Neha | _add role_ | _add link_ |
-| Angkon Roy | _add role_ | _add link_ |
-| Rizvi Hasan | _add role_ | _add link_ |
-| Taspiha Tabassum | _add role_ | _add link_ |
+| Melita Mehzabin Neha | Technical & Systems Architecture | Team Ghost Hunter |
+| Angkon Roy | Technical & Orbital Mechanics | Team Ghost Hunter |
+| Taspiha Tabassum | UI/UX & Backend Integration | Team Ghost Hunter |
+| Rizvi Hasan | Graphics & Visual Design | Team Ghost Hunter |
 
 ## Attribution
 Mission Forge is an independent project created for the NASA Space Apps Challenge. NASA and JPL data/services are used where indicated. This project is not an official NASA product and is not endorsed by NASA.

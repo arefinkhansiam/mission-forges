@@ -5,7 +5,7 @@ import { getNasa } from "../../lib/nasa.functions";
 import { AU_KM, BODIES, LIGHT_KM_S, bodyAngle, daysSinceJ2000, distanceKm, type BodyId } from "../../lib/nasa-data";
 
 // JPL Horizons IDs (heliocentric vectors).
-const HID: Partial<Record<BodyId, string>> = { Earth: "399", Moon: "301", Mars: "499", Ceres: "2000001", Jupiter: "599", Saturn: "699" };
+const HID: Partial<Record<BodyId, string>> = { Earth: "399", Moon: "301", Mars: "499", Venus: "299", Mercury: "199", Europa: "502", Titan: "606", Ceres: "2000001", Jupiter: "599", Saturn: "699" };
 type V = { x: number; y: number; z: number };
 
 // Stage 5 — today's real Earth–target distance from NASA/JPL Horizons; falls back to JPL mean elements (labeled DEMO DATA).

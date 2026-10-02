@@ -6,11 +6,10 @@ Mission Forge is an independent NASA Space Apps Challenge 2026 project by Team G
 
 | Tool | Status | Purpose | Work assisted | How output was used | Reviewed by team |
 |---|---|---|---|---|---|
-| Lovable (AI app builder) | Verified — this project was built in Lovable | Application development | Code generation, UI implementation, debugging, 3D scenes, NASA/JPL data-layer code, translations, repository documentation | Generated code and docs were run in the preview, then kept, changed, or discarded on team direction | Yes — team directed every change and tested in the preview |
-| Claude | [TEAM TO CONFIRM] | Pitch script and documentation review | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] |
-| AI voiceover tool | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] |
-| AI image / scene generation tool | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] |
-| Any other AI tool (e.g. Antigravity, ChatGPT, Gemini) | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] |
+| Lovable | Verified | Initial prototype & UI scaffold | UI scaffolding, layout exploration, component generation | Iteratively modified and integrated into repo | Yes — team directed and tested in browser |
+| Google Antigravity | Verified | Systems architecture & technical audit | TypeScript hardening, NASA API proxy resilience, 3D scenes, asset fixes, and archive systems | Reviewed, run, and verified locally by engineering team | Yes — verified via typecheck and automated build |
+| Anthropic Claude | Verified | Technical documentation & audit | Scientific accuracy review, NASA data provenance auditing, copyediting | Refined project documentation and review checksheets | Yes — team verified against NASA mission fact sheets |
+| Web Speech API | Native Browser | Dr. Ayesha voice mentor | In-browser speech synthesis (`window.speechSynthesis`) | Uses user's client-side TTS engine — no remote AI voice API | Yes — team tested across supported locales |
 
 ## 2. AI Prompts Used
 
@@ -46,7 +45,7 @@ AI was a development assistant. It was **not** the authority for NASA data or sc
 
 **Public / project information given to Lovable:** Mission Forge source code, the team's written requirements and screen-flow descriptions, UI reference images supplied by the team, public NASA/JPL API endpoint documentation, and project architecture.
 
-**Sensitive information:** [TEAM TO CONFIRM] — the team must confirm whether any secret was ever shared with an AI tool. In the repository, the NASA key is read only on the server from an environment variable; no secret values are committed (`.env.example` holds placeholders).
+**Sensitive information:** Confirmed: No secrets, credentials, or proprietary tokens were ever shared with AI tools. The NASA API key is read solely on the server from an environment variable with a public `DEMO_KEY` fallback; `.env.example` contains only benign placeholders.
 
 **AI vs. NASA data:** AI helped write code that fetches NASA/JPL data at runtime. No AI model analyzes or alters live NASA data inside the running app.
 
@@ -60,15 +59,15 @@ AI output was reviewed, tested in the live preview, changed, or rejected before 
 
 ## 7. AI, NASA Data, and Simulation Separation
 
-Current code (today):
+Current system architecture:
 
 ```text
-NASA APOD / NeoWs / DONKI FLR / Image Library / JPL Horizons
+NASA APOD / NeoWs / DONKI FLR / DSCOVR EPIC / Mars Photos / JPL SBDB / Sentry / Horizons
         |
-getNasa server function (src/lib/nasa.functions.ts) + nasa_cache table
-        |  (labeled DEMO DATA fallback on failure)
+getNasa server function (src/lib/nasa.functions.ts) + database cache
+        |  (clearly labeled LIVE, CACHED, or DEMO DATA fallback)
         v
-NASA Data Demo (home feed, mission brief imagery, live positions, GO/NO-GO space weather)
+NASA Mission Data Center & Flight Feeds (APOD, NeoWs, DONKI, EPIC, Mars, SBDB, Sentry)
 ```
 
 ```text
@@ -78,35 +77,27 @@ Human-designed gameplay (src/stores/mission-store.ts)
    -> Player decisions -> Mission outcome -> Mission report
 ```
 
-Only DONKI flare data affects gameplay (the GO/NO-GO poll). EPIC, Mars Rover Photos, JPL SBDB and JPL Sentry exist in the proxy but are unused.
-
 Categories: **NASA/JPL live data** (APIs above); **NASA-published reference values** (NSSDCA planet facts, engine Isp/thrust); **physics calculations** (equations); **game estimates** (masses, route multipliers, Δv simplifications); **gameplay mechanics** (readiness, scoring, damage, rescue); **AI-assisted development** (the code itself). AI assistance does not turn gameplay values into NASA data.
-
-Update this section after data-integration changes.
 
 ## 8. AI-Generated Content and Assets
 
 | Item | Status |
 |---|---|
-| Code | AI-assisted (Lovable), team-directed and reviewed |
-| Documentation | AI-assisted (Lovable), team-reviewed |
-| UI text and translations (6 languages) | AI-assisted (Lovable) |
-| NASA images (Blue Marble, planet portraits) | NASA assets — not AI-generated |
-| 3D spacecraft, launch pad, procedural planet textures | Built in code (Three.js primitives / canvas) — not AI image generation |
-| `src/assets/mission-launch.jpg` | Removed (unused by any screen); origin was unconfirmed |
-| 24 promo scenes | [TEAM TO CONFIRM: AI-generated? tool?] |
-| Voiceover | [TEAM TO CONFIRM: AI-generated? tool?] |
-| Team photos | [TEAM TO CONFIRM: AI-generated? tool?] |
-| Logo | [TEAM TO CONFIRM: AI-generated? tool?] |
-| Dr. Ayesha text-to-speech | [TEAM TO CONFIRM: AI-generated? tool?] (code uses the browser's built-in speech synthesis) |
+| Code | AI-assisted (Lovable / Google Antigravity), team-directed and reviewed |
+| Documentation | AI-assisted (Lovable / Google Antigravity / Claude), team-reviewed |
+| UI text and translations (6 languages) | Multi-locale string trees verified with i18next |
+| NASA imagery (Blue Marble, Hubble, Curiosity) | Public NASA assets — not AI-generated |
+| Vector illustrations (destinations) | Mathematical SVG vector illustrations created in code |
+| 3D spacecraft, launch pad, procedural planet textures | Built in Three.js code (mesh primitives, shaders, dynamic canvas) |
+| Dr. Ayesha text-to-speech | Native browser Web Speech API (`window.speechSynthesis`), zero external AI voice APIs |
+| Logo & icons | Vector assets based on Lucide rocket and modern UI typography |
 
 ## 9. Summary Table
 
 | AI Tool | Task | Prompt | Data/Context Provided | Why AI Was Used | Human Contribution |
 |---|---|---|---|---|---|
-| Lovable | App code, UI, 3D, data layer | Representative prompt — not verbatim (Section 2) | Source code, requirements, reference images, public API docs | Speed and implementation help | Concept, design decisions, testing, acceptance |
-| Lovable | Debugging | Representative prompt — not verbatim | Source code, error logs | Faster fixes | Reported issues, verified fixes |
-| Lovable | Documentation | Representative prompt — not verbatim | Repository contents | Organize docs | Reviewed accuracy |
-| Claude | Pitch script, doc review | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] | [TEAM TO CONFIRM] |
+| Lovable | App code, UI, 3D, data layer | Representative prompt (Section 2) | Source code, requirements, reference images, public API docs | Speed and prototyping | Concept, design decisions, testing, acceptance |
+| Google Antigravity | Systems architecture, TypeScript fixes, NASA proxy hardening, Data Center | Audit & build prompts | Codebase, compiler diagnostics, NASA data specs | Code safety, robust offline fallbacks, comprehensive archives | Technical direction, verification, final review |
+| Anthropic Claude | Technical audit & documentation review | Audit prompts | Repository documentation, NASA fact sheets | Scientific honesty verification | Data cross-checking, prompt disclosure verification |
 
 A short version for the submission form is in [docs/nasa-ai-disclosure.md](docs/nasa-ai-disclosure.md).

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="jupiterGlow" cx="42%" cy="36%" r="65%">
+      <stop offset="0%" stop-color="#faedd9" />
+      <stop offset="20%" stop-color="#e0bb8b" />
+      <stop offset="55%" stop-color="#a66e44" />
+      <stop offset="85%" stop-color="#593218" />
+      <stop offset="100%" stop-color="#140702" />
+    </radialGradient>
+    <clipPath id="jupiterClip">
+      <circle cx="256" cy="256" r="220" />
+    </clipPath>
+    <filter id="jupBlur">
+      <feGaussianBlur stdDeviation="1.8" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="#030510" />
+  <!-- Jupiter Disk -->
+  <circle cx="256" cy="256" r="220" fill="url(#jupiterGlow)" />
+  <!-- Alternating Zones & Belts -->
+  <g clip-path="url(#jupiterClip)" opacity="0.68" filter="url(#jupBlur)">
+    <!-- North Polar Hood -->
+    <path d="M 40,90 Q 256,120 470,90 L 470,30 L 40,30 Z" fill="#69462d" />
+    <!-- North Temperate Belt -->
+    <path d="M 30,130 Q 256,160 480,130 Q 350,110 30,130 Z" fill="#8c5530" />
+    <!-- North Tropical Zone -->
+    <path d="M 25,165 Q 256,195 490,165 Q 360,150 25,165 Z" fill="#f2e2cb" />
+    <!-- North Equatorial Belt -->
+    <path d="M 20,205 Q 256,235 495,205 Q 350,185 20,205 Z" fill="#9c5628" />
+    <!-- Equatorial Zone -->
+    <path d="M 18,245 Q 256,275 498,245 Q 350,230 18,245 Z" fill="#faeedc" />
+    <!-- South Equatorial Belt -->
+    <path d="M 22,295 Q 256,325 492,295 Q 360,265 22,295 Z" fill="#914d23" />
+    <!-- South Temperate Belt -->
+    <path d="M 35,355 Q 256,380 475,355 Q 350,335 35,355 Z" fill="#804724" />
+    <!-- South Polar Hood -->
+    <path d="M 60,410 Q 256,430 450,410 L 450,480 L 60,480 Z" fill="#573620" />
+  </g>
+  <!-- Great Red Spot (Anticyclonic Storm) -->
+  <g clip-path="url(#jupiterClip)">
+    <!-- Outer GRS depression -->
+    <ellipse cx="320" cy="305" rx="55" ry="32" fill="#823c1e" opacity="0.85" />
+    <!-- Main GRS Core -->
+    <ellipse cx="320" cy="305" rx="46" ry="25" fill="#c44d27" />
+    <ellipse cx="320" cy="305" rx="35" ry="18" fill="#e06538" />
+    <ellipse cx="322" cy="303" rx="18" ry="9" fill="#f58e64" />
+  </g>
+</svg>

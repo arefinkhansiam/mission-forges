@@ -20,6 +20,7 @@ type State = Design & {
   craft: "explorer" | "surveyor" | "guardian";
   budget: number;
   objective: "surface" | "orbit" | "survey";
+  nasaModelView: string | null;
   lang: Lang; muted: boolean; captions: boolean; learn: string | null; ayeshaSeen: string[];
   status: { id: number; text: string; tone: "info" | "ok" | "warn" | "danger" }[];
   set: (p: Partial<State>) => void;
@@ -36,7 +37,7 @@ let sid = 0;
 export const useMissionStore = create<State>()(
   persist(
     (set) => ({
-      ...ship, ...run, phase: "menu", lang: "en", muted: false, captions: true, learn: null, ayeshaSeen: [], cam: "chase", quality: "high", attempts: 0, craft: "explorer", budget: 2, objective: "surface", status: [],
+      ...ship, ...run, phase: "menu", lang: "en", muted: false, captions: true, learn: null, ayeshaSeen: [], cam: "chase", quality: "high", attempts: 0, craft: "explorer", budget: 2, objective: "surface", nasaModelView: null, status: [],
       set: (p) => set(p as never),
       go: (phase) => set({ phase }),
       toggleInstrument: (i) => set((s) => ({ instruments: s.instruments.includes(i) ? s.instruments.filter((x) => x !== i) : [...s.instruments, i] })),

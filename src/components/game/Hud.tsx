@@ -1,5 +1,5 @@
 import { GameScreens } from "./GameScreens";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, Compass, Crosshair, Database, Eye, FastForward, Flame as FlameIcon, Info, Radio, RefreshCcw, Rocket, Satellite, ScanLine, Settings, ShieldCheck, Wrench, X, Zap } from "lucide-react";
 import { AU_KM, BODIES, LIGHT_KM_S, SOURCES, SPACECRAFT_OBJECTS, PLANET_ORDER } from "../../lib/nasa-data";
 import { analyze, CAUSE_TEXT, ENGINES, finalScore, fmt, G0, INSTRUMENTS, landingStages, LAUNCH_LIMIT, MISSIONS, RESCUE_KITS, rescuePlan, resolveEncounter, ROOT_CAUSE, ROUTES, RTG_KW, WING_KW, type EngineId, type Instrument, type MissionId, type RouteId, type EncounterChoice } from "../../lib/mission-sim";
@@ -8,6 +8,7 @@ import { GoPoll } from "./GoPoll";
 import { designOf, useMissionStore, type Phase } from "../../stores/mission-store";
 import { launchProfile } from "./Stages";
 import { pathAU, rt, useTick } from "./runtime";
+import { sfx } from "../../lib/audio";
 
 const PHASE_TITLE: Record<Phase, string> = { menu: "", missions: "Mission Selection", brief: "Mission Brief", route: "Route Planning", routePreview: "Route Preview", objectives: "Mission Objectives", budget: "Mission Budget", fuel: "Fuel Plan", power: "Power Plan", comms: "Communications", instruments: "Instruments", overview: "Mission Overview", craft: "Spacecraft Selection", build: "Spacecraft Builder", check: "Mission Check", launch: "Launch Sequence", flight: "Deep Space Flight", encounter: "Hazard Encounter", failure: "Failure & Black Box", rescue: "Rescue Mission", docking: "Rendezvous & Repair", landing: "Entry, Descent & Landing", report: "Mission Report" };
 
@@ -16,7 +17,7 @@ function Panel({ children, className = "", title, icon }: { children: ReactNode;
 }
 function Btn({ children, onClick, tone = "primary", disabled, icon, className = "" }: { children: ReactNode; onClick?: () => void; tone?: "primary" | "ghost" | "danger"; disabled?: boolean | undefined; icon?: ReactNode; className?: string }) {
   const t = tone === "primary" ? "bg-primary text-primary-foreground shadow-[0_0_24px_color-mix(in_oklab,var(--primary)_45%,transparent)]" : tone === "danger" ? "bg-danger/85 text-foreground" : "bg-secondary/80 text-foreground hover:bg-secondary";
-  return <button disabled={disabled} onClick={onClick} className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-xs font-bold uppercase tracking-[0.14em] transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-35 ${t} ${className}`}>{icon}{children}</button>;
+  return <button disabled={disabled} onClick={() => { if (!disabled) { sfx.click(); onClick?.(); } }} className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-xs font-bold uppercase tracking-[0.14em] transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-35 ${t} ${className}`}>{icon}{children}</button>;
 }
 function Bar({ label, value, tone = "primary", right }: { label: string; value: number; tone?: "primary" | "success" | "warning" | "danger"; right?: string }) {
   const c = { primary: "bg-primary", success: "bg-success", warning: "bg-warning", danger: "bg-danger" }[tone];
@@ -174,6 +175,32 @@ function LaunchHud() {
   const steps: [number, string][] = [[0, "Systems go"], [3, "Fueling"], [LIFT - 6.6, "Engine start"], [LIFT, "Liftoff"], [18, "Booster separation"], [25, "Core separation"], [28, "Orbit insertion"], [29, "Solar array deploy"]];
   const inOrbit = t > 33;
   const target = MISSIONS[s.mission].body;
+
+  const prevSecRef = useRef<number>(-1);
+  const stagedRef = useRef<{ booster?: boolean; core?: boolean; lift?: boolean }>({});
+
+  useEffect(() => {
+    if (t < LIFT) {
+      const secRemaining = Math.ceil(LIFT - t);
+      if (secRemaining !== prevSecRef.current && secRemaining > 0 && secRemaining <= 5) {
+        sfx.countdown();
+        prevSecRef.current = secRemaining;
+      }
+    } else if (!stagedRef.current.lift) {
+      sfx.rumble();
+      stagedRef.current.lift = true;
+    }
+
+    if (t >= 18 && !stagedRef.current.booster) {
+      sfx.staging();
+      stagedRef.current.booster = true;
+    }
+    if (t >= 25 && !stagedRef.current.core) {
+      sfx.staging();
+      stagedRef.current.core = true;
+    }
+  }, [t]);
+
   return (
     <>
       <div className="pointer-events-none absolute left-1/2 top-16 -translate-x-1/2 text-center"><div className="mf-mono text-4xl font-bold sm:text-6xl" style={{ textShadow: "0 0 30px var(--primary)" }}>{t < LIFT ? `T−${Math.ceil(LIFT - t)}` : `T+${fmtTime(p.real)}`}</div></div>
@@ -249,7 +276,7 @@ function Flight() {
           <Btn tone={s.cam === "chase" ? "primary" : "ghost"} icon={<Radio size={14} />} onClick={() => { s.set({ cam: "chase" }); s.say("Earth mission control view"); }}>Mission control</Btn>
           <Btn tone={s.cam === "cockpit" ? "primary" : "ghost"} icon={<Eye size={14} />} onClick={() => { rt.yaw = 0; rt.pitch = 0; s.set({ cam: "cockpit" }); s.say("Cockpit view — drag to look around"); }}>Cockpit</Btn>
           {[1, 5, 20].map((w) => <Btn key={w} tone={warp === w ? "primary" : "ghost"} onClick={() => { rt.warp = w; setWarp(w); s.say(`Time warp ${w}×`); }}>{w}×</Btn>)}
-          <Btn tone="ghost" icon={<FlameIcon size={14} />} disabled={spare < 0.1} onClick={() => { s.set({ dvSpent: s.dvSpent + 0.1 }); rt.progress = Math.min(0.999, rt.progress + 0.03); s.say("Course correction burn: −0.10 km/s", "warn"); }}>Burn</Btn>
+          <Btn tone="ghost" icon={<FlameIcon size={14} />} disabled={spare < 0.1} onClick={() => { sfx.thrust(); s.set({ dvSpent: s.dvSpent + 0.1 }); rt.progress = Math.min(0.999, rt.progress + 0.03); s.say("Course correction burn: −0.10 km/s", "warn"); }}>Burn</Btn>
         </div>
       </div>
     </>
@@ -262,7 +289,7 @@ function Encounter() {
   return (
     <Sheet>
       <p className="text-xs text-muted-foreground">Radar shows a debris cloud ahead. Impact risk <b className="text-warning">{Math.round(a.hazard * 100)}%</b>. Spare Δv <b className="mf-mono text-foreground">{(a.dv - a.required - s.dvSpent).toFixed(2)} km/s</b>.</p>
-      <div className="mt-3 grid gap-2">{choices.map(({ id, label, Icon, hint }) => <button key={id} disabled={!!o} onClick={() => { const out = resolveEncounter(d, id, s.dvSpent); s.set({ outcome: out }); s.say(out.failed ? "Critical damage sustained" : "Hazard cleared", out.failed ? "danger" : "ok"); }} className={`rounded-lg p-2.5 text-left disabled:opacity-60 ${o?.choice === id ? "bg-primary/25" : "bg-secondary/60 hover:bg-secondary"}`}><b className="flex items-center gap-2 text-xs"><Icon size={14} />{label}</b><small className="text-[13px] text-muted-foreground">{hint}</small></button>)}</div>
+      <div className="mt-3 grid gap-2">{choices.map(({ id, label, Icon, hint }) => <button key={id} disabled={!!o} onClick={() => { const out = resolveEncounter(d, id, s.dvSpent); s.set({ outcome: out }); if (out.failed) sfx.alert(); else sfx.success(); s.say(out.failed ? "Critical damage sustained" : "Hazard cleared", out.failed ? "danger" : "ok"); }} className={`rounded-lg p-2.5 text-left disabled:opacity-60 ${o?.choice === id ? "bg-primary/25" : "bg-secondary/60 hover:bg-secondary"}`}><b className="flex items-center gap-2 text-xs"><Icon size={14} />{label}</b><small className="text-[13px] text-muted-foreground">{hint}</small></button>)}</div>
       {o && <div className="mt-3 space-y-2"><p className={`text-xs ${o.failed ? "text-danger" : "text-success"}`}>{o.log}</p><Bar label="Hull" value={o.hull} tone={toneOf(o.hull, 70, 45)} /><Bar label="Comms" value={o.comms} tone={toneOf(o.comms)} /><Bar label="Power" value={o.power} tone={toneOf(o.power)} /></div>}
       {o && <Nav next={() => { if (o.failed) { s.say("Black box data recovered", "danger"); s.go("failure"); } else { s.go("flight"); } }} nextLabel={o.failed ? "Black box" : "Continue"} />}
     </Sheet>
@@ -272,8 +299,16 @@ function Encounter() {
 function Failure() {
   const s = useMissionStore(); const o = s.outcome; if (!o) return null;
   const timeline = [["Decision", `Chose "${o.choice}"`, "T-0:45"], ["Impact", o.log, "T-0:30"], ...o.causes.map((c, i) => ["Critical", CAUSE_TEXT[c] ?? c, `T-0:${String(15 - i * 5).padStart(2, "0")}`]), ["Failure", "Mission objective at risk", "T-0:00"]];
+
+  useEffect(() => {
+    sfx.beacon();
+  }, []);
+
   return (
     <Sheet>
+      <div className="mb-2 text-[10.5px] font-bold tracking-widest text-muted-foreground uppercase flex items-center gap-1.5">
+        <Radio size={12} className="animate-pulse text-danger" /> GAME SIMULATION — BLACK BOX TELEMETRY RECORD
+      </div>
       <div className="mb-3 flex items-center gap-2 rounded-lg bg-danger/20 px-3 py-2 text-sm font-bold text-danger"><AlertTriangle size={16} />Mission failure — {CAUSE_TEXT[o.causes[0] ?? ""]}</div>
       <h4 className="mb-1 text-[13px] uppercase tracking-widest text-muted-foreground">Cause analysis</h4>
       <ul className="space-y-1 text-[13px]">{o.causes.map((c) => <li key={c}>• <span className="text-danger">{CAUSE_TEXT[c]}</span> — {ROOT_CAUSE[c]}</li>)}</ul>
@@ -318,12 +353,31 @@ function Landing() {
   const order = useMemo(() => stages.map((_, i) => i).sort((a, b) => ((a * 7 + 3) % stages.length) - ((b * 7 + 3) % stages.length)), [stages]);
   const [msg, setMsg] = useState("Put the stages in the right order.");
   const done = s.landing >= stages.length;
+
+  const touchdownFiredRef = useRef(false);
+  useEffect(() => {
+    if (done && !touchdownFiredRef.current) {
+      touchdownFiredRef.current = true;
+      sfx.touchdown();
+    }
+  }, [done]);
+
   return (
     <Sheet>
       <p className="mb-2 text-[13px] text-muted-foreground">{msg}</p>
       <div className="grid gap-1.5">{order.map((i) => <button key={i} disabled={done} onClick={() => { if (i === s.landing) { s.set({ landing: s.landing + 1 }); s.say(`${stages[i]}`, "ok"); setMsg(i === stages.length - 1 ? "Landing complete." : `${stages[i]} complete.`); } else { s.set({ landingErrors: s.landingErrors + 1 }); s.say(`Wrong order: ${stages[i]}`, "danger"); setMsg(`${stages[i]} now would be dangerous. Think about the physics.`); } }} className={`flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs ${s.landing > i ? "bg-success/15 text-success" : "bg-secondary/60 hover:bg-secondary"}`}>{stages[i]}{s.landing > i && <Check size={13} />}</button>)}</div>
       <div className="mt-3 grid grid-cols-2 gap-2"><Row k="Altitude" v={`${Math.max(0, 100 - (s.landing / stages.length) * 100).toFixed(0)}%`} /><Row k="Errors" v={s.landingErrors} tone={s.landingErrors ? "text-danger" : "text-success"} /></div>
       <Tip>{BODIES[body].atmosphere === "none" ? `${body} has no atmosphere: parachutes don't work, so engines do all the braking.` : BODIES[body].atmosphere === "gas" ? `${body} has no solid surface, so a probe sends data back until the pressure crushes it.` : "Mars' atmosphere is only ~1% of Earth's, so parachutes slow you down but engines finish the job."}</Tip>
+      {done && (
+        <div className="mt-3 rounded-lg border border-success/40 bg-success/15 p-3 text-center animate-fade-in">
+          <div className="flex items-center justify-center gap-2 text-xs font-bold tracking-widest text-success uppercase">
+            <ShieldCheck size={16} /> TOUCHDOWN CONFIRMED — SCIENCE SYSTEMS ONLINE
+          </div>
+          <p className="mt-1 text-[11px] text-foreground/80">
+            Surface telemetry lock verified. Descent engine cutoff confirmed. Automated science package deployment sequence active.
+          </p>
+        </div>
+      )}
       {done && <Nav next={() => s.go("report")} nextLabel="Mission report" />}
     </Sheet>
   );
