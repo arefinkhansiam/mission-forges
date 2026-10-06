@@ -2,6 +2,8 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, OrbitControls, Sparkles, Stars } from "@react-three/drei";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { Nasa3DModel, Surface, useReducedMotion } from "./Presentation";
+import type { OrbitControls as OrbitControlType } from "three-stdlib";
 import { BODIES } from "../../lib/nasa-data";
 import { landingStages, MISSIONS, type Design } from "../../lib/mission-sim";
 import { designOf, useMissionStore } from "../../stores/mission-store";
@@ -21,22 +23,38 @@ function Studio() {
 // ---------- Hangar / build ----------
 export function BuildScene() {
   const s = useMissionStore(); const d = designOf(s);
+  const reduced = useReducedMotion();
+  const controls = useRef<OrbitControlType>(null);
   const ref = useRef<THREE.Group>(null);
   const { camera } = useThree();
-  useEffect(() => { camera.position.set(0.55, 1.15, 6.6); camera.lookAt(0.55, 0, 0); }, [camera]);
-  useFrame(({ clock }) => { if (ref.current) ref.current.position.y = Math.sin(clock.elapsedTime * 0.8) * 0.05; });
+  useEffect(() => {
+    const reset = () => { camera.position.set(4.8, 2.8, 6.8); controls.current?.target.set(0.35, -0.25, 0); controls.current?.update(); };
+    reset();
+    const move = (event: Event) => {
+      const action = (event as CustomEvent<string>).detail, c = controls.current;
+      if (!c) return;
+      if (action === "reset") { reset(); return; }
+      const offset = camera.position.clone().sub(c.target);
+      if (action === "left" || action === "right") offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), action === "left" ? -0.25 : 0.25);
+      else offset.multiplyScalar(action === "in" ? 0.85 : 1.15).clampLength(4, 12);
+      camera.position.copy(c.target).add(offset); c.update();
+    };
+    window.addEventListener("mf-camera", move);
+    return () => window.removeEventListener("mf-camera", move);
+  }, [camera]);
   return (
     <>
-      <color attach="background" args={["#040b1a"]} />
-      <fog attach="fog" args={["#040b1a", 8, 22]} />
+      <color attach="background" args={["#090e16"]} />
+      <fog attach="fog" args={["#090e16", 16, 35]} />
       <Studio />
-      <ambientLight intensity={0.25} />
-      <directionalLight position={[4, 6, 3]} intensity={2.2} color="#e8f2ff" />
-      <Stars radius={60} depth={20} count={1500} factor={3} fade />
-      <group ref={ref} rotation-z={0.12}><Spacecraft design={d} deploy={1} /></group>
+      <ambientLight intensity={0.65} />
+      <directionalLight position={[4, 6, 3]} intensity={3.2} color="#fff3e3" />
+      <directionalLight position={[-5, 1, -3]} intensity={2} color="#9ac9e0" />
+      <group ref={ref} rotation-z={0.12}>{s.referenceModel && s.mission === "Mars" ? <Nasa3DModel /> : <Spacecraft design={d} deploy={1} />}</group>
+      <gridHelper args={[28, 28, "#293443", "#151e2a"]} position-y={-2.42} />
       <mesh position-y={-2.4} rotation-x={-Math.PI / 2}><circleGeometry args={[4, 64]} /><meshStandardMaterial color="#0a1a33" metalness={0.8} roughness={0.35} /></mesh>
       <mesh position-y={-2.39} rotation-x={-Math.PI / 2}><ringGeometry args={[2.6, 2.64, 96]} /><meshBasicMaterial color="#5aaeff" /></mesh>
-       <OrbitControls makeDefault enablePan={false} autoRotate autoRotateSpeed={0.5} minDistance={3} maxDistance={10} target={[0.55, 0, 0]} />
+       <OrbitControls ref={controls} makeDefault enablePan={false} autoRotate={!reduced && s.phase === "craft"} autoRotateSpeed={0.35} minDistance={4} maxDistance={12} target={[0.35, -0.25, 0]} />
     </>
   );
 }
@@ -66,6 +84,7 @@ function Pad() {
 
 export function LaunchScene() {
   useTick(10);
+  const reduced = useReducedMotion();
   const s = useMissionStore(); const d = designOf(s);
   const stack = useRef<THREE.Group>(null), srbs = useRef<THREE.Group>(null), core = useRef<THREE.Group>(null), orion = useRef<THREE.Group>(null), las = useRef<THREE.Group>(null);
   const { camera, scene } = useThree();
@@ -94,7 +113,7 @@ export function LaunchScene() {
     if (core.current) core.current.visible = t < CORE_SEP;
     if (las.current) las.current.visible = t < CORE_SEP - 1;
     if (orion.current) orion.current.visible = inOrbit;
-    const shake = rt.thrust ? (t < LIFTOFF + 6 ? 0.08 : 0.03) : 0;
+    const shake = !reduced && rt.thrust ? (t < LIFTOFF + 6 ? 0.08 : 0.03) : 0;
     if (!inOrbit && stack.current) {
       const target = stack.current.position.clone().add(new THREE.Vector3(0, 6, 0));
       const want = t < LIFTOFF ? new THREE.Vector3(9, 5, 16) : target.clone().add(new THREE.Vector3(8 + lt * 0.2, -3, 14));
@@ -134,7 +153,7 @@ export function LaunchScene() {
         {rt.launchT > LIFTOFF - 2 && rt.launchT < LIFTOFF + 8 && <Sparkles count={120} scale={[10, 3, 10]} position-y={0.8} size={20} speed={2} color="#e8e0d6" opacity={0.7} />}
       </group>
       <group ref={orion}>
-        <mesh position={[0, -16, -8]}><sphereGeometry args={[14, 64, 32]} /><meshStandardMaterial color="#2a62c4" roughness={0.8} emissive="#0a2a66" emissiveIntensity={0.3} /></mesh>
+        <group position={[0, -16, -8]}><Surface body="Earth" radius={14} /></group>
         <mesh position={[0, -16, -8]} scale={1.02}><sphereGeometry args={[14, 48, 24]} /><meshBasicMaterial color="#7fc0ff" transparent opacity={0.15} side={THREE.BackSide} blending={THREE.AdditiveBlending} /></mesh>
         <group rotation-z={0.4}><Spacecraft design={d} deploy={deploy} /></group>
       </group>
@@ -190,6 +209,19 @@ export function LandingScene() {
   const lander = useRef<THREE.Group>(null), chute = useRef<THREE.Group>(null);
   const tex = useMemo(() => { const c = document.createElement("canvas"); c.width = c.height = 512; const g = c.getContext("2d")!; g.fillStyle = body.color; g.fillRect(0, 0, 512, 512); for (let i = 0; i < 900; i++) { g.fillStyle = i % 3 ? body.color2 : "#ffffff"; g.globalAlpha = 0.05 + Math.random() * 0.15; g.beginPath(); g.arc(Math.random() * 512, Math.random() * 512, 1 + Math.random() * 18, 0, 7); g.fill(); } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(12, 12); t.colorSpace = THREE.SRGBColorSpace; return t; }, [body]);
   const gas = body.atmosphere === "gas";
+  const terrain = useMemo(() => {
+    const geometry = new THREE.PlaneGeometry(260, 260, 72, 72);
+    const positions = geometry.getAttribute("position");
+    if (positions) {
+      for (let i = 0; i < positions.count; i++) {
+        const x = positions.getX(i), y = positions.getY(i);
+        const edge = THREE.MathUtils.smoothstep(Math.hypot(x, y), 6, 35);
+        positions.setZ(i, edge * (Math.sin(x * 0.055 + 1) * Math.cos(y * 0.072) * 5 + Math.sin(x * 0.14 + y * 0.09) * 1.5));
+      }
+    }
+    geometry.computeVertexNormals(); return geometry;
+  }, []);
+  useEffect(() => () => { tex.dispose(); terrain.dispose(); }, [tex, terrain]);
   const skyCol = body.atmosphere === "none" ? "#010206" : gas ? body.color2 : body.id === "Mars" ? "#c79a72" : "#8ab8e6";
   const { camera } = useThree();
   useEffect(() => { camera.position.set(8, 6, 12); }, [camera]);
@@ -217,7 +249,7 @@ export function LandingScene() {
         [0, -12, -24].map((y, i) => <mesh key={y} position-y={y} rotation-x={-Math.PI / 2}><planeGeometry args={[400, 400]} /><meshStandardMaterial map={tex} transparent opacity={0.55 + i * 0.15} color={i % 2 ? body.color : "#f4e4c8"} /></mesh>)
       ) : (
         <>
-          <mesh rotation-x={-Math.PI / 2}><planeGeometry args={[600, 600]} /><meshStandardMaterial map={tex} roughness={1} /></mesh>
+          <mesh rotation-x={-Math.PI / 2} geometry={terrain}><meshStandardMaterial map={tex} roughness={1} /></mesh>
           {Array.from({ length: 40 }, (_, i) => <mesh key={i} position={[Math.sin(i * 12.9) * 40, 0.2, Math.cos(i * 7.3) * 40]} scale={0.3 + (i % 5) * 0.3}><dodecahedronGeometry args={[1, 0]} /><meshStandardMaterial color={body.color2} roughness={1} /></mesh>)}
         </>
       )}

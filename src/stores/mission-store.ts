@@ -10,6 +10,7 @@ type State = Design & {
   phase: Phase;
   cam: "chase" | "cockpit";
   quality: "high" | "low";
+  referenceModel: boolean;
   outcome: Outcome | null;
   rescueKit: string[];
   rescued: boolean;
@@ -37,8 +38,9 @@ export const useMissionStore = create<State>()(
   persist(
     (set) => ({
       ...ship, ...run, phase: "menu", lang: "en", muted: false, captions: true, learn: null, ayeshaSeen: [], cam: "chase", quality: "high", attempts: 0, craft: "explorer", budget: 2, objective: "surface", status: [],
+      referenceModel: false,
       set: (p) => set(p as never),
-      go: (phase) => set({ phase }),
+      go: (phase) => set({ phase, referenceModel: false }),
       toggleInstrument: (i) => set((s) => ({ instruments: s.instruments.includes(i) ? s.instruments.filter((x) => x !== i) : [...s.instruments, i] })),
       say: (text, tone = "info") => set((s) => ({ status: [{ id: ++sid, text, tone }, ...s.status].slice(0, 4) })),
       newRun: (phase = "build") => set((s) => ({ ...run, phase, attempts: s.attempts + 1, status: [] })),

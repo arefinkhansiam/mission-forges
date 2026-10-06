@@ -1,5 +1,6 @@
 import { useFrame, type ThreeElements } from "@react-three/fiber";
-import { useMemo, useRef, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useReducedMotion } from "./Presentation";
 import * as THREE from "three";
 import type { Design } from "../../lib/mission-sim";
 
@@ -29,7 +30,8 @@ function solarTexture() {
 
 function Pop({ children, ...p }: { children: ReactNode } & ThreeElements["group"]) {
   const ref = useRef<THREE.Group>(null);
-  useFrame((_, d) => { const g = ref.current; if (!g) return; const s = THREE.MathUtils.damp(g.scale.x, 1, 6, Math.min(d, 0.05)); g.scale.setScalar(s); });
+  const reduced = useReducedMotion();
+  useFrame((_, d) => { const g = ref.current; if (!g) return; const s = reduced ? 1 : THREE.MathUtils.damp(g.scale.x, 1, 6, Math.min(d, 0.05)); g.scale.setScalar(s); });
   return <group ref={ref} scale={0.001} {...p}>{children}</group>;
 }
 
@@ -74,6 +76,7 @@ export function Flame({ power = 1, length = 1.4, radius = 0.22, y = 0 }: { power
 
 export function Spacecraft({ design, deploy = 1, thrust = 0, variant = "full" }: { design: Design; deploy?: number; thrust?: number; variant?: "full" | "lander" | "rescue" }) {
   const tex = useMemo(() => solarTexture(), []);
+  useEffect(() => () => tex.dispose(), [tex]);
   const engineOffsets = design.engines === 1 ? [0] : design.engines === 2 ? [-0.28, 0.28] : [-0.36, 0, 0.36];
   const wingAngles = Array.from({ length: design.wings }, (_, i) => Math.PI / 4 + (i * Math.PI * 2) / Math.max(design.wings, 1));
   const ionFlame = design.engine === "ion";

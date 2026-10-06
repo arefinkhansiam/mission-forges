@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { ReadinessPanel, MissionReport } from "./MissionPanels";
 import { GameScreens } from "./GameScreens";
 import { useMemo, useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, Compass, Crosshair, Database, Eye, FastForward, Flame as FlameIcon, Info, Radio, RefreshCcw, Rocket, Satellite, ScanLine, Settings, ShieldCheck, Wrench, X, Zap } from "lucide-react";
@@ -211,9 +213,10 @@ function useTelemetry() {
 }
 
 function Telemetry() {
+  const { t: tr } = useTranslation();
   const t = useTelemetry();
-  const cells: [string, string, string?][] = [["Velocity", `${t.vel.toFixed(2)} km/s`], ["From Earth", t.km > 1e6 ? `${(t.km / 1e6).toFixed(1)} M km` : `${fmt(t.km)} km`], ["Mission day", `${t.day.toFixed(1)} / ${t.a.days}`], ["Fuel", `${t.fuelPct.toFixed(0)}%`, t.fuelPct < 15 ? "text-warning" : ""], ["Δv left", `${t.dvLeft.toFixed(2)} km/s`, t.dvLeft < 0 ? "text-danger" : ""], ["Power", `${t.kw.toFixed(2)} / ${t.draw} kW`, t.kw < t.draw ? "text-danger" : ""], ["Temp (eq.)", `${t.tempC.toFixed(0)} °C`], ["Comms delay", t.delay < 60 ? `${t.delay.toFixed(1)} s` : `${(t.delay / 60).toFixed(1)} min`, t.comms < 20 ? "text-danger" : ""]];
-  return <div className="mf-panel pointer-events-auto grid grid-cols-4 gap-x-3 gap-y-1.5 p-2.5 sm:grid-cols-8">{cells.map(([k, v, c]) => <div key={k}><div className="text-[13px] uppercase tracking-wider text-muted-foreground">{k}</div><div className={`mf-mono text-[13px] sm:text-xs ${c ?? ""}`}>{v}</div></div>)}</div>;
+  const cells: [string, string, string?][] = [[tr("exp.velocity"), `${t.vel.toFixed(2)} km/s`], [tr("exp.distance"), t.km > 1e6 ? `${(t.km / 1e6).toFixed(1)} M km` : `${fmt(t.km)} km`], [tr("exp.missionDay"), `${t.day.toFixed(1)} / ${t.a.days}`], [tr("ui.game.fuel"), `${t.fuelPct.toFixed(0)}%`, t.fuelPct < 15 ? "text-warning" : ""], [tr("exp.dvLeft"), `${t.dvLeft.toFixed(2)} km/s`, t.dvLeft < 0 ? "text-danger" : ""], [tr("ui.game.power"), `${t.kw.toFixed(2)} / ${t.draw} kW`, t.kw < t.draw ? "text-danger" : ""], [tr("exp.temperature"), `${t.tempC.toFixed(0)} °C`], [tr("exp.delay"), t.delay < 60 ? `${t.delay.toFixed(1)} s` : `${(t.delay / 60).toFixed(1)} min`, t.comms < 20 ? "text-danger" : ""]];
+  return <div className="mf-telemetry mf-panel pointer-events-auto grid grid-cols-4 gap-x-3 gap-y-1.5 p-2.5 sm:grid-cols-8">{cells.map(([k, v, c]) => <div key={k}><div className="text-[13px] uppercase tracking-wider text-muted-foreground">{k}</div><div className={`mf-mono text-[13px] sm:text-xs ${c ?? ""}`}>{v}</div></div>)}</div>;
 }
 
 function ScanCard() {
@@ -236,20 +239,21 @@ function ScanCard() {
 }
 
 function Flight() {
+  const { t } = useTranslation();
   useTick(4); const s = useMissionStore(); const d = designOf(s); const a = analyze(d);
   const [warp, setWarp] = useState(rt.warp);
   const spare = a.dv - a.required - s.dvSpent;
   return (
     <>
-      <div className="pointer-events-none absolute left-3 top-16 hidden sm:block"><ScanCard /></div>
-      <div className="absolute inset-x-2 bottom-2 flex flex-col gap-2 sm:inset-x-4 sm:bottom-4">
-        <div className="sm:hidden"><ScanCard /></div>
+      <div className="mf-flight-heading"><p className="gm-kicker">{t("exp.telemetryNote")}</p><h1>{s.mission}</h1><p>{t("exp.progress")} · {Math.round(rt.progress * 100)}%</p><progress value={rt.progress} max={1} aria-label={t("exp.progress")} /></div>
+      <div className="mf-flight-bottom absolute inset-x-2 bottom-2 flex flex-col gap-2 sm:inset-x-4 sm:bottom-4">
+        
         <Telemetry />
         <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-1.5">
-          <Btn tone={s.cam === "chase" ? "primary" : "ghost"} icon={<Radio size={14} />} onClick={() => { s.set({ cam: "chase" }); s.say("Earth mission control view"); }}>Mission control</Btn>
-          <Btn tone={s.cam === "cockpit" ? "primary" : "ghost"} icon={<Eye size={14} />} onClick={() => { rt.yaw = 0; rt.pitch = 0; s.set({ cam: "cockpit" }); s.say("Cockpit view — drag to look around"); }}>Cockpit</Btn>
-          {[1, 5, 20].map((w) => <Btn key={w} tone={warp === w ? "primary" : "ghost"} onClick={() => { rt.warp = w; setWarp(w); s.say(`Time warp ${w}×`); }}>{w}×</Btn>)}
-          <Btn tone="ghost" icon={<FlameIcon size={14} />} disabled={spare < 0.1} onClick={() => { s.set({ dvSpent: s.dvSpent + 0.1 }); rt.progress = Math.min(0.999, rt.progress + 0.03); s.say("Course correction burn: −0.10 km/s", "warn"); }}>Burn</Btn>
+          <Btn tone={s.cam === "chase" ? "primary" : "ghost"} icon={<Radio size={14} />} onClick={() => { s.set({ cam: "chase" }); s.say("Earth mission control view"); }}>{t("ui.flow.control")}</Btn>
+          <Btn tone={s.cam === "cockpit" ? "primary" : "ghost"} icon={<Eye size={14} />} onClick={() => { rt.yaw = 0; rt.pitch = 0; s.set({ cam: "cockpit" }); s.say("Cockpit view — drag to look around"); }}>{t("ui.flow.cockpit")}</Btn>
+          <Btn tone="ghost" onClick={() => { rt.warp = warp === 0 ? 1 : 0; setWarp(rt.warp); }}>{t(warp === 0 ? "exp.resume" : "exp.pause")}</Btn>{[1, 5, 20].map((w) => <Btn key={w} tone={warp === w ? "primary" : "ghost"} onClick={() => { rt.warp = w; setWarp(w); s.say(`Time warp ${w}×`); }}>{w}×</Btn>)}
+          <Btn tone="ghost" icon={<FlameIcon size={14} />} disabled={spare < 0.1} onClick={() => { s.set({ dvSpent: s.dvSpent + 0.1 }); rt.progress = Math.min(0.999, rt.progress + 0.03); s.say("Course correction burn: −0.10 km/s", "warn"); }}>{t("exp.burn")}</Btn>
         </div>
       </div>
     </>
@@ -314,15 +318,16 @@ function Docking() {
 }
 
 function Landing() {
+  const { t } = useTranslation();
   const s = useMissionStore(); const body = MISSIONS[s.mission].body; const stages = landingStages(body);
   const order = useMemo(() => stages.map((_, i) => i).sort((a, b) => ((a * 7 + 3) % stages.length) - ((b * 7 + 3) % stages.length)), [stages]);
-  const [msg, setMsg] = useState("Put the stages in the right order.");
+  const [msg, setMsg] = useState("exp.stageHint");
   const done = s.landing >= stages.length;
   return (
     <Sheet>
-      <p className="mb-2 text-[13px] text-muted-foreground">{msg}</p>
-      <div className="grid gap-1.5">{order.map((i) => <button key={i} disabled={done} onClick={() => { if (i === s.landing) { s.set({ landing: s.landing + 1 }); s.say(`${stages[i]}`, "ok"); setMsg(i === stages.length - 1 ? "Landing complete." : `${stages[i]} complete.`); } else { s.set({ landingErrors: s.landingErrors + 1 }); s.say(`Wrong order: ${stages[i]}`, "danger"); setMsg(`${stages[i]} now would be dangerous. Think about the physics.`); } }} className={`flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs ${s.landing > i ? "bg-success/15 text-success" : "bg-secondary/60 hover:bg-secondary"}`}>{stages[i]}{s.landing > i && <Check size={13} />}</button>)}</div>
-      <div className="mt-3 grid grid-cols-2 gap-2"><Row k="Altitude" v={`${Math.max(0, 100 - (s.landing / stages.length) * 100).toFixed(0)}%`} /><Row k="Errors" v={s.landingErrors} tone={s.landingErrors ? "text-danger" : "text-success"} /></div>
+      <p className="mb-2 text-[13px] text-muted-foreground">{t(msg)}</p>
+      <div className="grid gap-1.5">{order.map((i) => <button key={i} disabled={done || i < s.landing} onClick={() => { if (i === s.landing) { s.set({ landing: s.landing + 1 }); s.say(`${stages[i]}`, "ok"); setMsg(i === stages.length - 1 ? "exp.stageDone" : "exp.stageHint"); } else { s.set({ landingErrors: s.landingErrors + 1 }); s.say(`Wrong order: ${stages[i]}`, "danger"); setMsg("exp.stageWrong"); } }} className={`flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs ${s.landing > i ? "bg-success/15 text-success" : "bg-secondary/60 hover:bg-secondary"}`}>{stages[i]}{s.landing > i && <Check size={13} />}</button>)}</div>
+      <div className="mt-3 grid grid-cols-2 gap-2"><Row k={t("exp.descent")} v={`${Math.round(s.landing / stages.length * 100)}%`} /><Row k="Errors" v={s.landingErrors} tone={s.landingErrors ? "text-danger" : "text-success"} /></div>
       <Tip>{BODIES[body].atmosphere === "none" ? `${body} has no atmosphere: parachutes don't work, so engines do all the braking.` : BODIES[body].atmosphere === "gas" ? `${body} has no solid surface, so a probe sends data back until the pressure crushes it.` : "Mars' atmosphere is only ~1% of Earth's, so parachutes slow you down but engines finish the job."}</Tip>
       {done && <Nav next={() => s.go("report")} nextLabel="Mission report" />}
     </Sheet>
@@ -344,26 +349,27 @@ function Report() {
 
 // ---------------- Layout ----------------
 function Sheet({ children, wide = false, className = "" }: { children: ReactNode; wide?: boolean; className?: string }) {
-  return <div className={`absolute inset-x-2 bottom-2 max-h-[58%] overflow-y-auto sm:inset-x-auto sm:bottom-4 sm:right-4 sm:top-16 sm:max-h-none ${wide ? "sm:w-[24rem]" : "sm:w-[21rem]"} ${className}`}><Panel>{children}</Panel></div>;
+  return <div className={`mf-operation-sheet absolute inset-x-2 bottom-2 max-h-[58%] overflow-y-auto sm:inset-x-auto sm:bottom-4 sm:right-4 sm:top-16 sm:max-h-none ${wide ? "sm:w-[24rem]" : "sm:w-[21rem]"} ${className}`}><Panel>{children}</Panel></div>;
 }
 function Nav({ back, next, nextLabel = "Next", backLabel = "Back", disabled }: { back?: () => void; next?: () => void; nextLabel?: string; backLabel?: string; disabled?: boolean | undefined }) {
   return <div className="mt-4 flex justify-between gap-2">{back ? <Btn tone="ghost" icon={<ArrowLeft size={14} />} onClick={back}>{backLabel}</Btn> : <span />}{next && <Btn onClick={next} disabled={disabled}>{nextLabel}<ArrowRight size={14} /></Btn>}</div>;
 }
 
 export function Hud() {
+  const { t } = useTranslation();
   const phase = useMissionStore((s) => s.phase), go = useMissionStore((s) => s.go);
-  const screens: Partial<Record<Phase, ReactNode>> = { check: <CheckS />, launch: <LaunchHud />, flight: <Flight />, encounter: <Encounter />, failure: <Failure />, rescue: <Rescue />, docking: <Docking />, landing: <Landing />, report: <Report /> };
+  const screens: Partial<Record<Phase, ReactNode>> = { check: <ReadinessPanel />, launch: <LaunchHud />, flight: <Flight />, encounter: <Encounter />, failure: <Failure />, rescue: <Rescue />, docking: <Docking />, landing: <Landing />, report: <MissionReport /> };
   if (["menu", "missions", "brief", "route", "routePreview", "objectives", "budget", "fuel", "power", "comms", "instruments", "overview", "craft", "build"].includes(phase)) return <GameScreens phase={phase} />;
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 text-foreground">
+    <div className="mf-operational pointer-events-none absolute inset-0 z-10 text-foreground">
       {(
         <div className="absolute inset-x-2 top-2 flex items-start justify-between gap-2 sm:inset-x-4 sm:top-4">
-          <div className="pointer-events-auto flex items-center gap-3"><button aria-label="Main menu" onClick={() => go("menu")}><Logo /></button><span className="hidden text-[13px] font-bold uppercase tracking-[0.2em] text-cyan-soft sm:inline">{PHASE_TITLE[phase]}</span></div>
+          <div className="pointer-events-auto flex items-center gap-3"><button aria-label="Main menu" onClick={() => go("menu")}><Logo /></button><span className="hidden text-[13px] font-bold uppercase tracking-[0.2em] text-cyan-soft sm:inline">{t(`exp.${phase === "launch" ? "launchPhase" : phase}`)}</span></div>
           <StatusFeed />
         </div>
       )}
       {screens[phase]}
-      {<div className="absolute left-3 top-14 text-[13px] font-bold uppercase tracking-[0.2em] text-cyan-soft sm:hidden">{PHASE_TITLE[phase]}</div>}
+      {<div className="absolute left-3 top-14 text-[13px] font-bold uppercase tracking-[0.2em] text-cyan-soft sm:hidden">{t(`exp.${phase === "launch" ? "launchPhase" : phase}`)}</div>}
       {(phase === "flight" || phase === "encounter") && useMissionStore.getState().cam === "cockpit" && <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-primary/70"><Crosshair size={28} /></div>}
     </div>
   );

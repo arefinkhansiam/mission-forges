@@ -11,16 +11,23 @@ export function GoPoll({ onReady }: { onReady: (ok: boolean) => void }) {
   const { t } = useTranslation();
   const s = useMissionStore(); const d = designOf(s); const a = analyze(d);
   const call = useServerFn(getNasa);
-  const [flare, setFlare] = useState<{ cls: string; recent: boolean; demo: boolean } | null>(null);
-  const [ack, setAck] = useState(false);
+  const [flare, setFlare] = useState<{ cls: string; recent: boolean; demo: boolean; cached: boolean } | null>(null);
+  const [accepted, setAccepted] = useState<string | null>(null);
   const [polled, setPolled] = useState(0);
   useEffect(() => {
+    let active = true;
+    const fallback = () => { if (active) setFlare({ cls: "", recent: false, demo: true, cached: false }); };
+    const timeout = window.setTimeout(fallback, 5000);
     call({ data: { source: "donki" } }).then((r) => {
-      const ev = (JSON.parse(r.data) as { events?: { classType?: string; peakTime?: string }[] } | null)?.events ?? [];
+      if (!active) return;
+      const ev = (JSON.parse(r.data) as { events?: { classType?: string; time?: string }[] } | null)?.events ?? [];
       const last = ev[ev.length - 1];
-      const recent = !!last?.peakTime && Date.now() - Date.parse(last.peakTime) < 864e5;
-      setFlare({ cls: last?.classType ?? "", recent, demo: !r.live });
-    }).catch(() => setFlare({ cls: "", recent: false, demo: true }));
+      const age = last?.time ? Date.now() - Date.parse(last.time) : Infinity;
+      const recent = age >= 0 && age < 864e5;
+      setFlare({ cls: last?.classType ?? "", recent, demo: !r.live, cached: r.cached });
+      window.clearTimeout(timeout);
+    }).catch(fallback);
+    return () => { active = false; window.clearTimeout(timeout); };
   }, [call]);
   const strong = !!flare && flare.recent && /^[XM]/.test(flare.cls);
   const rows: { k: string; v: V; why: string }[] = [
@@ -30,10 +37,12 @@ export function GoPoll({ onReady }: { onReady: (ok: boolean) => void }) {
     { k: "comms", v: d.antennas < 2 ? "hold" : "go", why: t("ui.poll.comms", { n: d.antennas }) },
     { k: "shield", v: a.hazard > 0.3 && !d.shield ? "hold" : "go", why: t("ui.poll.shield", { pct: Math.round(a.hazard * 100) }) },
     { k: "science", v: a.science === 0 ? "hold" : "go", why: t("ui.poll.science", { n: a.science }) },
-    { k: "weather", v: !flare ? "hold" : strong ? "hold" : "go", why: !flare ? t("ui.poll.loading") : flare.cls ? t("ui.poll.weather", { cls: flare.cls }) + (flare.demo ? " · DEMO DATA" : " · NASA DONKI") : t("ui.poll.quiet") },
+    { k: "weather", v: !flare || flare.demo || strong ? "hold" : "go", why: !flare ? t("ui.poll.loading") : flare.demo ? t("exp.demoWeather") : `${flare.cls ? t("ui.poll.weather", { cls: flare.cls }) : t("ui.poll.quiet")} · ${t(flare.cached ? "exp.cachedWeather" : "exp.liveWeather")}` },
   ];
   const nogo = rows.some((r) => r.v === "nogo"), holds = rows.filter((r) => r.v === "hold").length;
-  const ok = (nogo || holds > 0 ? ack : true) && polled >= rows.length;
+  const signature = JSON.stringify(rows.map(r => [r.k, r.v, r.why]));
+  const ack = accepted === signature;
+  const ok = !!flare && (nogo || holds > 0 ? ack : true) && polled >= rows.length;
   useEffect(() => { onReady(ok); }, [ok, onReady]);
   useEffect(() => { setPolled(0); const id = setInterval(() => setPolled((p) => (p >= rows.length ? p : p + 1)), 280); return () => clearInterval(id); }, [rows.length]);
   return (
@@ -47,9 +56,9 @@ export function GoPoll({ onReady }: { onReady: (ok: boolean) => void }) {
       ))}</ul>
       {nogo && <p className="mf-poll-note nogo">{t("ui.poll.blocked")}</p>}
       {(nogo || holds > 0) && polled >= rows.length && (
-        <label className="mf-poll-ack"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> {t("ui.poll.accept", { n: holds })}</label>
+        <label className="mf-poll-ack"><input type="checkbox" checked={ack} onChange={(e) => setAccepted(e.target.checked ? signature : null)} /> {t("exp.acceptRisk")}</label>
       )}
-      {ok && <p className="mf-poll-note go">{t("ui.poll.allgo")}</p>}
+      {ok && <p className={`mf-poll-note ${nogo || holds ? "hold" : "go"}`}>{t(nogo || holds ? "exp.acknowledged" : "ui.poll.allgo")}</p>}
     </section>
   );
 }

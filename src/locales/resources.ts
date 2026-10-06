@@ -139,7 +139,50 @@ const fr: Tree = {
   ayeshaTips: { build: "Vérifiez votre delta-v avant tout. S'il est inférieur au besoin de la route, ajoutez du carburant ou un moteur plus efficace.", launch: "Le lancement est la partie la plus dure. La plupart du carburant sert juste à échapper à la gravité terrestre." },
 };
 
-export const resources = { en: { translation: en }, bn: { translation: bn }, hi: { translation: hi }, es: { translation: es }, ar: { translation: ar }, fr: { translation: fr } };
+const experience = {
+  eyebrow: "MISSION CONTROL / EXPLORATION PROGRAM", title: "Your decisions.\nA world away.", intro: "Choose a world. Engineer your spacecraft. Bring the science home.",
+  independent: "Independent educational project · Not endorsed by NASA", earthCredit: "Earth · NASA / Reto Stöckli · Blue Marble",
+  simulation: "EDUCATIONAL SIMULATION", flightPlan: "MISSION DESIGN / FLIGHT PLAN", destination: "DESTINATION", recommended: "First mission", days: "days",
+  destinations: {
+    Mars: { name: "Mars", note: "A thin atmosphere. An ambitious arrival.", detail: "Explore a world shaped by ancient water. Balance propellant, protection and the science you can bring home." },
+    Moon: { name: "Moon", note: "A nearby world with no air to brake you.", detail: "Practice a short transfer. Without an atmosphere, engines must do all the braking." },
+    Ceres: { name: "Ceres", note: "A small world deep in the asteroid belt.", detail: "Follow the questions raised by Dawn. Plan for a long journey and weaker sunlight." },
+    Jupiter: { name: "Jupiter", note: "Extreme radiation. No solid surface.", detail: "Study a gas giant. Your atmospheric probe must transmit its observations before pressure ends the descent." },
+    Saturn: { name: "Saturn", note: "A distant giant. A long way from sunlight.", detail: "Cross the outer solar system. Power and communications become critical far from Earth." },
+  },
+  surfaceHint: "Investigate the surface and practice the destination's arrival sequence.", orbitHint: "Focus on mapping and remote sensing. This demo still includes the arrival exercise.", surveyHint: "Prioritize remote observations. This demo still includes the arrival exercise.", gasHint: "No solid surface: this destination uses an atmospheric probe.",
+  route_safe: "Hohmann transfer", route_fast: "Fast transfer", route_science: "Science flyby", route_risky: "Gravity assist",
+  routeNote_safe: "Lower energy demand; a longer coast.", routeNote_fast: "Arrive sooner; carry more propellant.", routeNote_science: "More science targets; more exposure.", routeNote_risky: "Save propellant; accept navigation risk.",
+  mapNote: "Illustrative transfer · compressed distances · mean orbital elements", risk: "Encounter risk", modelCredit: "NASA 3D Resources · surface map", proceduralCredit: "Illustrative globe · surface color only",
+  keepDesign: "Keep my configuration", presetNote: "Choosing a preset replaces your component choices. Keep your configuration to preserve your resource plan.",
+  playerCraft: "YOUR MODULAR SPACECRAFT", craftNote: "Orion-inspired educational design", reference: "View NASA MRO", backToCraft: "Back to my craft", referenceNote: "NASA MRO · Reference only · NASA/JPL-Caltech / Brian Kumanchik",
+  camera: "Camera controls", camera_left: "Rotate left", camera_right: "Rotate right", camera_in: "Zoom in", camera_out: "Zoom out", camera_reset: "Reset camera",
+  modelLoading: "Loading NASA reference spacecraft…", modelFallback: "Reference model unavailable. Return to your craft to continue.", textureFallback: "Texture unavailable · illustrative globe",
+  reserve: "Propulsive reserve", demand: "Demand", preflight: "FLIGHT DIRECTOR / READINESS", checkTitle: "Ready for the journey?", ready: "Ready with checks", atRisk: "Engineering limits exceeded", improve: "Improve your design",
+  fixMass: "Reduce mass in the hangar", fixFuel: "Review fuel and propulsive reserve", fixPower: "Increase power generation", fixComms: "Add a backup antenna", fixShield: "Add debris protection", fixScience: "Choose a science instrument",
+  launch: "Launch", acknowledged: "Risk acknowledged. This is not an all-GO clearance.", acceptRisk: "I understand the HOLD / NO-GO results and choose to launch with risk.", demoWeather: "DEMO DATA · Solar conditions are unverified", cachedWeather: "CACHED · NASA DONKI", liveWeather: "LIVE · NASA DONKI",
+  flight: "DEEP SPACE / FLIGHT", check: "READINESS", encounter: "HAZARD DECISION", landing: "ARRIVAL SEQUENCE", report: "MISSION REPORT", failure: "BLACK BOX", rescue: "RESCUE PLAN", docking: "RENDEZVOUS", launchPhase: "LAUNCH SEQUENCE",
+  velocity: "Velocity", distance: "From Earth", missionDay: "Mission day", dvLeft: "Δv remaining", temperature: "Equilibrium temp.", delay: "Radio delay", pause: "Pause flight", resume: "Resume flight", burn: "Correction burn", telemetryNote: "SIMULATED TELEMETRY", timeControl: "Time controls", progress: "Journey progress",
+  debrief: "MISSION COMPLETE / DEBRIEF", choicesMatter: "Every choice leaves a trace.", success: "Science brought home.", recovered: "A mission recovered.", lost: "A mission to learn from.",
+  score_objective: "Objective", score_science: "Science", score_safety: "Safety", score_resources: "Resources", score_landing: "Landing",
+  lessonFuelLow: "A narrow reserve left little room for course corrections. Try a more efficient engine or a lighter payload.", lessonFuelGood: "Your propulsive reserve gave the mission room to respond to unexpected events.",
+  decision: "Hazard decision", choice_shield: "Shield forward", choice_boost: "Boost through", choice_reroute: "Reroute", noEncounter: "No encounter recorded",
+  lessonHazardBad: "The chosen maneuver or damaged systems exceeded the design's limits. Review fuel, power and redundancy before replaying.", lessonHazardGood: "The craft cleared the hazard. Compare another route or protection choice on your next flight.",
+  sequenceErrors: "Sequence errors: {{count}}", lessonLandingBad: "Arrival steps follow a physical order: slow down before releasing protection.", lessonLandingGood: "You sequenced the arrival correctly, protecting the craft through each stage.",
+  reportNote: "Scores and hazards are simplified game mechanics. NASA observations are labeled separately and do not validate this mission design.", newDestination: "New destination", retry: "Redesign & retry",
+  stageHint: "Select the next arrival action. Completed steps stay locked.", stageDone: "Arrival sequence complete.", stageWrong: "That step is too early. Consider how the craft slows down.", errors: "Errors", descent: "Descent progress", nextAction: "Next action", budgetNote: "A planning preference, not a spending limit or real mission cost.",
+  budget_1: "Prioritize low mass", budget_2: "Balance mission resources", budget_3: "Prioritize system redundancy", resourceNote: "Changes update your craft and engineering analysis immediately.", add: "Add {{label}}", remove: "Remove {{label}}",
+};
+// English is the explicit fallback for new explanatory copy; existing six-language UI is retained.
+const experienceLocales = {
+  en: experience,
+  bn: { ...experience, simulation: "শিক্ষামূলক সিমুলেশন", title: "আপনার সিদ্ধান্ত।\nদূরের এক পৃথিবী।", intro: "গন্তব্য বাছুন। মহাকাশযান তৈরি করুন। বিজ্ঞান ফিরিয়ে আনুন।", keepDesign: "আমার নকশা রাখুন", launch: "উৎক্ষেপণ", pause: "বিরতি", resume: "চালিয়ে যান", report: "মিশন প্রতিবেদন", retry: "নতুন নকশায় আবার চেষ্টা", newDestination: "নতুন গন্তব্য", camera: "ক্যামেরা নিয়ন্ত্রণ", days: "দিন" },
+  hi: { ...experience, simulation: "शैक्षिक सिमुलेशन", title: "आपके निर्णय।\nएक दूर की दुनिया।", intro: "दुनिया चुनें। अंतरिक्ष यान बनाएँ। विज्ञान घर लाएँ।", keepDesign: "मेरा डिज़ाइन रखें", launch: "प्रक्षेपण", pause: "रोकें", resume: "जारी रखें", report: "मिशन रिपोर्ट", retry: "बदलें और फिर कोशिश करें", newDestination: "नया गंतव्य", camera: "कैमरा नियंत्रण", days: "दिन" },
+  es: { ...experience, simulation: "SIMULACIÓN EDUCATIVA", title: "Tus decisiones.\nUn mundo lejano.", intro: "Elige un mundo. Diseña tu nave. Trae la ciencia a casa.", keepDesign: "Conservar mi diseño", launch: "Lanzar", pause: "Pausar vuelo", resume: "Reanudar vuelo", report: "INFORME DE MISIÓN", retry: "Rediseñar y reintentar", newDestination: "Nuevo destino", camera: "Controles de cámara", days: "días" },
+  ar: { ...experience, simulation: "محاكاة تعليمية", title: "قراراتك.\nعالم بعيد.", intro: "اختر عالماً. صمم مركبتك. أعد العلم إلى الأرض.", keepDesign: "الاحتفاظ بتصميمي", launch: "إطلاق", pause: "إيقاف الرحلة", resume: "استئناف الرحلة", report: "تقرير المهمة", retry: "إعادة التصميم والمحاولة", newDestination: "وجهة جديدة", camera: "التحكم بالكاميرا", days: "أيام" },
+  fr: { ...experience, simulation: "SIMULATION ÉDUCATIVE", title: "Vos décisions.\nUn monde lointain.", intro: "Choisissez un monde. Concevez votre vaisseau. Rapportez la science.", keepDesign: "Garder ma configuration", launch: "Lancer", pause: "Suspendre le vol", resume: "Reprendre le vol", report: "RAPPORT DE MISSION", retry: "Reconcevoir et réessayer", newDestination: "Nouvelle destination", camera: "Commandes de caméra", days: "jours" },
+};
+export const resources = { en: { translation: { ...en, exp: experienceLocales.en } }, bn: { translation: { ...bn, exp: experienceLocales.bn } }, hi: { translation: { ...hi, exp: experienceLocales.hi } }, es: { translation: { ...es, exp: experienceLocales.es } }, ar: { translation: { ...ar, exp: experienceLocales.ar } }, fr: { translation: { ...fr, exp: experienceLocales.fr } } };
 export const LANGS = [
   { id: "en", label: "English", speech: "en-US" }, { id: "bn", label: "বাংলা", speech: "bn-BD" }, { id: "hi", label: "हिन्दी", speech: "hi-IN" },
   { id: "es", label: "Español", speech: "es-ES" }, { id: "ar", label: "العربية", speech: "ar-SA", rtl: true }, { id: "fr", label: "Français", speech: "fr-FR" },

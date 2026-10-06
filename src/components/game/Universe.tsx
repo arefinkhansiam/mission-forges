@@ -7,6 +7,7 @@ import { BODIES, PLANET_ORDER, visRadius, visSize, type BodyId } from "../../lib
 import { analyze, MISSIONS } from "../../lib/mission-sim";
 import { designOf, useMissionStore } from "../../stores/mission-store";
 import { Spacecraft, Flame } from "./Spacecraft";
+import { Surface, useReducedMotion } from "./Presentation";
 import earthAsset from "../../assets/nasa-earth-blue-marble.jpg.asset.json";
 import { bodyVisPos, nearestBody, pathAU, pathPoint, rt, useTick } from "./runtime";
 
@@ -30,9 +31,9 @@ function planetTexture(id: BodyId) {
 }
 
 function Planet({ id, focus }: { id: BodyId; focus: boolean }) {
-  const ref = useRef<THREE.Group>(null), spin = useRef<THREE.Mesh>(null);
+  const ref = useRef<THREE.Group>(null), spin = useRef<THREE.Group>(null);
   const tex = useMemo(() => planetTexture(id), [id]);
-  const earth = useMemo(() => { if (id !== "Earth") return null; const t = new THREE.TextureLoader().load(earthAsset.url); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; }, [id]);
+  useEffect(() => () => tex.dispose(), [tex]);
   const size = visSize(id);
   useFrame(() => {
     if (ref.current) bodyVisPos(id, rt.days, ref.current.position);
@@ -40,7 +41,7 @@ function Planet({ id, focus }: { id: BodyId; focus: boolean }) {
   });
   return (
     <group ref={ref}>
-      <mesh ref={spin} rotation-z={id === "Uranus" ? 1.7 : 0.4}><sphereGeometry args={[size, 48, 24]} /><meshStandardMaterial map={earth ?? tex} roughness={0.9} emissive={focus ? "#113a6b" : "#000"} emissiveIntensity={0.4} /></mesh>
+      <group ref={spin} rotation-z={id === "Uranus" ? 1.7 : 0.4}>{["Earth", "Mars", "Moon", "Jupiter", "Saturn"].includes(id) ? <Surface body={id} radius={size} /> : <mesh><sphereGeometry args={[size, 40, 24]} /><meshStandardMaterial map={tex} roughness={0.9} emissive={focus ? "#113a6b" : "#000"} emissiveIntensity={0.4} /></mesh>}</group>
       {id === "Earth" && <mesh scale={1.04}><sphereGeometry args={[size, 32, 16]} /><meshBasicMaterial color="#6fb6ff" transparent opacity={0.16} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>}
       {id === "Saturn" && <mesh rotation-x={-Math.PI / 2 + 0.45}><ringGeometry args={[size * 1.3, size * 2.2, 64]} /><meshStandardMaterial color="#d6c49a" transparent opacity={0.7} side={THREE.DoubleSide} /></mesh>}
     </group>
@@ -75,7 +76,7 @@ function Trajectory() {
   useTick(4);
   const s = useMissionStore();
   const d = designOf(s); const a = analyze(d);
-  const depart = s.phase === "missions" || s.phase === "route" || s.phase === "menu" ? rt.days : rt.departDays;
+  const depart = ["flight", "encounter", "failure", "rescue"].includes(s.phase) ? rt.departDays : rt.days;
   const pts = Array.from({ length: 81 }, (_, i) => pathPoint(d, i / 80, depart, a.days, new THREE.Vector3()));
   return <Line points={pts} color="#9fd6ff" lineWidth={2.2} transparent opacity={0.95} />;
 }
@@ -118,7 +119,8 @@ function Cockpit() {
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   }, []);
   useFrame(() => { const g = ref.current; if (!g) return; g.position.copy(camera.position); g.quaternion.copy(camera.quaternion); });
-  const panel = new THREE.MeshStandardMaterial({ color: "#1b2a40", metalness: 0.4, roughness: 0.6, emissive: "#1d3a66", emissiveIntensity: 1.4 });
+  const panel = useMemo(() => new THREE.MeshStandardMaterial({ color: "#1b2a40", metalness: 0.4, roughness: 0.6, emissive: "#1d3a66", emissiveIntensity: 1.4 }), []);
+  useEffect(() => () => { panel.dispose(); screens.dispose(); }, [panel, screens]);
   return (
     <group ref={ref}>
       <pointLight position={[0, -0.02, 0.02]} intensity={0.04} distance={0.3} color="#7fc4ff" />
@@ -171,6 +173,7 @@ function Rig({ controls }: { controls: React.RefObject<OC | null> }) {
 
 export function Universe() {
   useTick(4);
+  const reduced = useReducedMotion();
   const s = useMissionStore();
   const d = designOf(s); const a = analyze(d);
   const ship = useRef<THREE.Group>(null);
@@ -199,7 +202,7 @@ export function Universe() {
       if (rt.progress >= 0.45 && !st.outcome) { st.say("Debris field detected ahead", "danger"); st.go("encounter"); }
       if (rt.progress >= 1) { st.say(`Arrived at ${target}`, "ok"); st.go("landing"); }
     } else if (!onPath) {
-      rt.days += dt * (st.phase === "menu" ? 2 : 6);
+      if (!reduced) rt.days += dt * (st.phase === "menu" ? 2 : 6);
     }
     // Ship placement
     if (onPath) {
@@ -224,7 +227,8 @@ export function Universe() {
     <>
       <color attach="background" args={["#010308"]} />
       <ambientLight intensity={0.18} color="#8fb4ff" />
-      <Stars radius={200} depth={80} count={6000} factor={5} saturation={0.1} fade speed={0.2} />
+      <Stars radius={200} depth={80} count={s.quality === "high" ? 2200 : 600} factor={3} saturation={0.1} fade speed={reduced ? 0 : 0.1} />
+      <directionalLight position={[4, 6, 3]} intensity={1.3} color="#e6edf2" />
       <Sun />
       {PLANET_ORDER.map((id) => <Planet key={id} id={id} focus={id === target} />)}
       <Planet id="Moon" focus={target === "Moon"} />
