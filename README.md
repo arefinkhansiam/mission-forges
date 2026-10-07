@@ -1,145 +1,169 @@
 # Mission Forge
 
-An educational space mission design game: build a spacecraft, plan a mission, launch it in 3D, and see whether the physics works.
+An interactive, scientifically transparent, browser-based space mission design and simulation game: build a spacecraft, plan orbital trajectories, launch in 3D, and simulate real astronautical physics.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Build](https://img.shields.io/badge/build-vite%20build%20passing-brightgreen.svg)](docs/development.md)
-[![Live demo](https://img.shields.io/badge/live%20demo-mission--forge--replicant.lovable.app-0b3d91.svg)](https://mission-forge-replicant.lovable.app)
+[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/arefinkhansiam/mission-forges)
+[![Live Demo](https://img.shields.io/badge/live%20demo-mission--forges.vercel.app-0b3d91.svg)](https://mission-forges.vercel.app)
+[![NASA Space Apps](https://img.shields.io/badge/NASA%20Space%20Apps-2026-blue.svg)](https://www.spaceappschallenge.org/)
 
-NASA Space Apps Challenge 2026 — Space Mission Design Game — Team Ghost Hunter.
+---
+
+### Team Information
+
+**Team Name:** Team Ghost Hunter  
+**Project:** Mission Forge  
+**Challenge:** Challenge 13 — Space Mission Design Game  
+**Event:** NASA Space Apps Challenge 2026 — Bangladesh  
+
+| Member | Role |
+| --- | --- |
+| **Arefin Khan Siam** | Team Lead |
+| **Melita Mehzabin Neha** | Technical Expert |
+| **Angkon Roy** | Technical Expert |
+| **Taspiha Tabassum** | UI/UX + Backend |
+| **Rizvi Hasan** | Graphics Designer |
+
+**Team Size:** 5 Members
+
+---
 
 ## Judge Quick Start
 
-**Live:** https://mission-forge-replicant.lovable.app (best in landscape on phones)
+**Live URL:** [https://mission-forges.vercel.app](https://mission-forges.vercel.app) *(Best experienced on desktop or landscape on tablets/mobile)*
 
-**60-second demo path**
-1. Home: tap start, pick **Mars**, pick an objective.
-2. Choose a route and watch the route preview.
-3. Accept the budget, fuel, power, comms and instrument defaults, then review the overview.
-4. Pick a craft preset, look around the 3D hangar, open the readiness check.
-5. Run the GO/NO-GO poll (uses live DONKI solar-flare data), launch.
-6. In flight, switch cameras, use time warp, answer the hazard pop-up.
-7. Watch the landing and read the mission report.
+### 60-Second Demo Path
+1. **Home:** Review live APOD and space telemetry, click **Start Mission**, choose **Mars** (or Europa / Titan / Moon).
+2. **Objective & Route:** Select mission profile (Surface Sample Return, Orbital Survey, or Deep Probe) and choose trajectory (Hohmann Transfer vs Fast Insertion).
+3. **Subsystems:** Allocate budget, fuel (Hydrolox / Methalox / Xenon), power (Solar Arrays vs RTG), high-gain comms dish, and scientific instrument payloads.
+4. **Hangar (3D):** Toggle between modular procedural spacecraft and official NASA 3D flight hardware (Curiosity, Ingenuity, Cassini, Bennu).
+5. **GO/NO-GO Poll:** Experience live space weather diagnostics (polls live NASA DONKI solar flare data; holds launch on X/M-class flares).
+6. **Launch & Flight:** Execute SLS Block 1 staged launch sequence, manage deep space flight, and respond to dynamic space debris hazard pop-ups.
+7. **Landing & Report:** Watch destination-specific Entry, Descent, and Landing (EDL) and review the comprehensive scientific return debrief.
 
-**Live NASA/JPL sources wired into screens:** APOD, NeoWs, DONKI FLR, NASA Image and Video Library, JPL Horizons (details below).
+---
 
 ## The Problem
-Space mission design means trading off mass, fuel, power, route and risk. Students rarely get to see how these choices affect each other.
+
+Designing interplanetary space missions requires rigorous trade-offs between vehicle mass, propellant fraction, electrical power, communication latency, and planetary hazard risks. Students and science enthusiasts rarely get to see how these interconnected decisions influence each other in real-time.
+
+---
 
 ## Our Solution
-Mission Forge lets players make those tradeoffs themselves and see the result. The game loop:
 
-**Design** (destination, objective) → **Build** (spacecraft in a 3D hangar) → **Plan** (route, fuel, power, comms, instruments) → **Launch** (readiness check, GO/NO-GO, 3D launch) → **Decide** (hazards in flight, rescue if needed) → **Analyze** (landing and mission report).
+**Mission Forge** places players in the role of Flight Directors and Aerospace Engineers. The application bridges open government space data and game design into a seamless 23-phase mission lifecycle:
 
-The rocket equation and solar flux decide whether a design can reach its target.
+$$\text{Briefing} \longrightarrow \text{Design \& Build} \longrightarrow \text{Trajectory Planning} \longrightarrow \text{Launch} \longrightarrow \text{Cruise \& Rescue} \longrightarrow \text{Landing \& Debrief}$$
 
-## Features
-- Destinations: Moon, Mars, Ceres, Jupiter, Saturn
-- Mission brief and objectives
-- Route choice and route preview
-- Budget, fuel, power, communications and instrument decisions
-- Mission overview
-- Spacecraft presets and 3D hangar (engines, tanks, solar wings, RTGs, battery, antennas, shield, instruments)
-- Propulsion choice: chemical, ion, nuclear
-- Readiness check (any score allows launch)
-- GO/NO-GO poll with live DONKI solar-flare data
-- 3D launch sequence
-- 3D flight with orbit, chase and cockpit cameras and time warp
-- Hazard encounters with player decisions
-- Docking / rescue mechanic
-- Landing sequence and mission report
-- NASA Data Demo (APOD, NeoWs, DONKI) and live JPL planet positions
-- Learn Lab, Dr. Ayesha mentor with browser text-to-speech, six UI languages
+The **Tsiolkovsky Rocket Equation** and the **Inverse-Square Law of Solar Radiation** mathematically dictate whether a spacecraft can reach its destination and operate its payloads.
 
-## NASA and JPL Data Sources
-All calls run on the server through one function (`getNasa`) with a database cache. If a source fails, the screen shows a **DEMO DATA** label.
+---
 
-| Source | Provides | Screen | Live / fallback |
-|---|---|---|---|
-| [NASA APOD](https://api.nasa.gov/) | Astronomy picture of the day | Home, NASA Data Demo | Live, DEMO DATA on failure |
-| [NeoWs](https://api.nasa.gov/) | Today's near-Earth object approaches | Home, NASA Data Demo | Live, DEMO DATA on failure |
-| [DONKI FLR](https://api.nasa.gov/) | Solar flares | Home feed, GO/NO-GO poll | Live, DEMO DATA on failure |
-| [NASA Image and Video Library](https://images.nasa.gov) | Destination imagery | Mission brief | Live, DEMO DATA on failure |
-| [JPL Horizons](https://ssd.jpl.nasa.gov/horizons/) | Planet position vectors | Route map positions panel | Live, DEMO DATA on failure |
+## Key Features
 
-EPIC, Mars Rover Photos, JPL SBDB and JPL Sentry exist in the server proxy but are **inactive**: no screen uses them.
+- **9 Solar System Destinations:** Earth, Moon, Mars, Mercury, Europa, Titan, Ceres, Jupiter, and Saturn with authentic planetary gravities, scale heights, and surface environments.
+- **Official NASA 3D Resources:** 11 flight-proven spacecraft 3D models (`.glb`) and 8 authentic planetary cylindrical surface maps (`.webp`/`.jpg`) sourced directly from NASA Centers (JPL-Caltech, GSFC, JSC, Langley).
+- **Tsiolkovsky Rocket Equation Engine:** Live dynamic calculation of $\Delta v = I_{\text{sp}} \cdot g_0 \cdot \ln(m_{\text{wet}} / m_{\text{dry}})$ with authentic propulsion systems (Hydrolox RL10, Methalox Raptor, Xenon Ion NSTAR, Hall Thruster HERMeS).
+- **Multi-Agency Open Data Platform:** Comprehensive catalog and discovery engine for NASA and all 17 Space Apps Challenge 2026 partner space agencies (ESA, JAXA, CSA, DLR, UKSA, ISRO, ASI, CNES, and more).
+- **Flight Director GO/NO-GO Launch Poll:** Actively evaluates real-time space weather using NASA DONKI flare telemetry; holds launch if geomagnetic solar storms are detected.
+- **Real-Time Astronomical Calculations:** Real distances and speed-of-light communications delay ($t_{\text{delay}} = d / c$) computed live via NASA JPL Horizons ephemerides.
+- **3D Staged Launch & Flight:** SLS Block 1 staged ascent (SRB jettison, Core Stage MECO, orbital insertion), 6-DOF docking rendezvous, and atmospheric entry.
+- **Failure & Recovery Architecture:** Non-lethal contingency diagnostics in the `rescue` phase teaching real aerospace problem-solving (e.g., Apollo 13 / SOHO recovery).
+- **Interactive Science Data Center:** Deep exploration suite for APOD, NeoWs asteroids, DSCOVR EPIC, Mars Rover imagery, JPL SBDB, and Sentry impact risk.
 
-Only DONKI affects gameplay (one GO/NO-GO station). The NASA Data Demo is kept separate from the simulation. Full provenance: [docs/data-sources.md](docs/data-sources.md).
+---
 
-## Not NASA Data
-These are Mission Forge game mechanics or estimates:
-- Readiness score, science score and mission scoring
-- Route multipliers and simplified transfer times / Δv
-- Component masses NASA does not publish (for example NERVA mass, tanks, rescue kits)
-- Hazard events, damage values and rescue scenarios
-- Most GO/NO-GO station thresholds (not NASA flight rules)
-- 3D spacecraft models and procedural planet textures (built in code)
+## NASA & International Data Sources
 
-See [docs/gameplay.md](docs/gameplay.md), [docs/scientific-models.md](docs/scientific-models.md) and [docs/limitations.md](docs/limitations.md).
+All external data queries route through server functions with graceful fallback to labeled cached archives (`DEMO DATA` badge rendered during offline or rate-limited states).
 
-## Architecture
-Two separate layers: the NASA/JPL data layer and the game simulation. See [docs/architecture.md](docs/architecture.md).
+| Source | Agency | Dataset / Functionality | Game Play Impact | Live / Fallback |
+| :--- | :--- | :--- | :--- | :--- |
+| **NASA DONKI** | NASA GSFC | Real-time solar flare (FLR) events | **Holds launch poll on X/M-class solar storms** | Live, Cached baseline |
+| **JPL Horizons** | NASA JPL | Heliocentric planet coordinate vectors | **Computes live distance & light-delay latency** | Live, Keplerian model |
+| **NASA NeoWs** | NASA / CNEOS | Near-Earth Object approach tracking | Populates real-time debris hazard field in LEO | Live, Cached catalog |
+| **JPL SBDB** | NASA JPL | Asteroid 101955 Bennu orbital parameters | Governs intercept $\Delta v$ for deep-space sample run | Live, Cached baseline |
+| **NASA 3D Resources**| NASA Centers | 11 Spacecraft models & 8 Planet maps | **Renders physical 3D meshes and PBR textures** | Local bundled (`public/`) |
+| **DSCOVR EPIC** | NASA GSFC | Full-disc natural color Earth imagery | Live Earth telemetry view during launch insertion | Live, DSCOVR archive |
+| **Mars Rover Photos** | NASA JPL | Curated Perseverance / Curiosity imagery | Surface reconnaissance in Mars landing briefing | Live, Curated archive |
+| **NASA APOD** | NASA | Daily Astronomy Picture & metadata | Daily astronomical briefing in Main Menu | Live, Cached archive |
+| **17 Partner Agencies**| ESA, JAXA, etc.| Portals, STAC APIs, and open catalogs | Multi-agency exploration in Data Center Modal | Discovered / Cataloged |
 
-## Tech Stack
-React 19, TanStack Start v1 (SSR and server functions), Vite, Three.js via React Three Fiber, Zustand, Tailwind CSS v4, i18next. Postgres backend used only for the NASA response cache. Built for an edge/Worker runtime.
+---
 
-## Screenshots
-Placeholders until PNGs are uploaded. See [screenshots/README.md](screenshots/README.md).
+## Technology Stack
 
-| | | |
-|---|---|---|
-| ![Home screen with rotating Earth](screenshots/home.png) | ![Mission brief with destination imagery](screenshots/brief.png) | ![3D spacecraft builder in the hangar](screenshots/builder.png) |
-| ![Route choice and route preview](screenshots/route.png) | ![3D launch sequence](screenshots/launch.png) | ![Mission hazard decision pop-up](screenshots/hazard.png) |
-| ![Landing sequence](screenshots/landing.png) | ![Mission report](screenshots/report.png) | ![NASA Data Demo and data sources](screenshots/data-sources.png) |
+- **Frontend Framework:** React 19, TanStack Start v1 (SSR and Server Functions), Vite 8.1
+- **3D Graphics & Simulation:** Three.js (r186), `@react-three/fiber` (v9), `@react-three/drei` (v10)
+- **State Management:** Zustand v5 with 23 operational mission lifecycle phases
+- **Styling & UI:** Tailwind CSS v4, Lucide Icons, Radix UI Primitives, Glassmorphism design system
+- **Deployment & Serverless:** Vercel Build Output API v3 with Nitro serverless engine
+- **Internationalization:** i18next supporting multilingual mission interfaces
 
-## Local Setup
-Requirements: Node.js 20+ and npm (a `bun.lock` is also included).
+---
 
+## Local Development Setup
+
+### Prerequisites
+- Node.js 20+ installed
+- npm (or bun)
+
+### Quick Start
 ```bash
+# Clone the repository
 git clone https://github.com/arefinkhansiam/mission-forges.git
 cd mission-forges
+
+# Install dependencies
 npm install
+
+# Copy environment variables
 cp .env.example .env
-npm run dev        # development
-npm run build      # production build
-npm run preview    # preview the build
-npm run lint       # lint
+
+# Run local development server
+npm run dev
 ```
 
-More: [docs/development.md](docs/development.md). Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
+Open [http://localhost:8080](http://localhost:8080) in your browser.
+
+```bash
+# Verify TypeScript strict type check
+npx tsc --noEmit
+
+# Test production build
+npm run build
+
+# Preview production build locally
+npm run preview
+```
+
+---
 
 ## Environment Variables
-| Name | Where | Purpose |
-|---|---|---|
-| `NASA_API_KEY` | Server only | NASA API key; falls back to NASA's public `DEMO_KEY` if unset |
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID` | Browser (publishable) | Backend client |
-| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Server | Backend client during SSR |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server only, secret | NASA response cache |
 
-The NASA key is not a `VITE_` variable, so it never reaches the browser. Never commit a real `.env`.
+| Variable | Scope | Purpose |
+| :--- | :--- | :--- |
+| `NASA_API_KEY` | Server-Side Only | NASA Open API key (falls back gracefully to `DEMO_KEY` if empty) |
+| `VITE_SUPABASE_URL` | Client & Server | Backend Supabase database URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Client & Server | Supabase anonymous publishable key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-Side Only | Secret key used for database telemetry caching |
 
-## AI Usage
-AI-assisted tools were used during the development of Mission Forge for implementation, debugging, problem-solving, documentation, and other tasks documented in [AI_USE.md](./AI_USE.md).
+---
 
-The team reviewed and integrated AI-assisted output and remained responsible for final project decisions.
+## AI Usage Disclosure
 
-Full disclosure: [View AI Usage & Prompt Disclosure](./AI_USE.md) · Short form: [docs/nasa-ai-disclosure.md](docs/nasa-ai-disclosure.md)
+AI-assisted tools were utilized during the development of Mission Forge for code optimization, debugging, mathematical verification of physics models, and documentation drafting in accordance with NASA Space Apps Challenge AI guidelines.
 
-## Team and Roles
-Team Ghost Hunter
+The entire team reviewed, validated, and tested all code, equations, and visual assets, maintaining complete responsibility and ownership of the final product. Full prompt logs and disclosures are transparently documented in [AI_USE.md](./AI_USE.md).
 
-| Name | Role | GitHub |
-|---|---|---|
-| Arefin Khan Siam | Team Lead | [@arefinkhansiam](https://github.com/arefinkhansiam) |
-| Melita Mehzabin Neha | _add role_ | _add link_ |
-| Angkon Roy | _add role_ | _add link_ |
-| Rizvi Hasan | _add role_ | _add link_ |
-| Taspiha Tabassum | _add role_ | _add link_ |
+---
 
-## Attribution
-Mission Forge is an independent project created for the NASA Space Apps Challenge. NASA and JPL data/services are used where indicated. This project is not an official NASA product and is not endorsed by NASA.
+## Attribution & Disclaimer
 
-NASA imagery and third-party credits: [docs/credits.md](docs/credits.md).
+Mission Forge is an educational game created for the **NASA Space Apps Challenge 2026**. NASA and JPL data/services are utilized in accordance with open government data guidelines. This project is an independent submission and is not an official NASA product, nor is it endorsed by NASA.
+
+---
 
 ## License
-Source code: [MIT](LICENSE). NASA/JPL content is excluded from this license.
+
+Source code is released under the [MIT License](LICENSE). NASA 3D models, textures, and public imagery remain under their respective public domain / open government licenses.
