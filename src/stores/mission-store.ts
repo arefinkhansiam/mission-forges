@@ -11,6 +11,7 @@ type State = Design & {
   cam: "chase" | "cockpit";
   quality: "high" | "low";
   referenceModel: boolean;
+  activeNasaModel?: string | undefined;
   outcome: Outcome | null;
   rescueKit: string[];
   rescued: boolean;
@@ -39,6 +40,7 @@ export const useMissionStore = create<State>()(
     (set) => ({
       ...ship, ...run, phase: "menu", lang: "en", muted: false, captions: true, learn: null, ayeshaSeen: [], cam: "chase", quality: "high", attempts: 0, craft: "explorer", budget: 2, objective: "surface", status: [],
       referenceModel: false,
+      activeNasaModel: undefined,
       set: (p) => set(p as never),
       go: (phase) => set({ phase, referenceModel: false }),
       toggleInstrument: (i) => set((s) => ({ instruments: s.instruments.includes(i) ? s.instruments.filter((x) => x !== i) : [...s.instruments, i] })),

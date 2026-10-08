@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="moonGlow" cx="38%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#f0ece6" />
+      <stop offset="30%" stop-color="#c8c3bd" />
+      <stop offset="65%" stop-color="#736f6b" />
+      <stop offset="85%" stop-color="#363432" />
+      <stop offset="100%" stop-color="#0a0a09" />
+    </radialGradient>
+    <clipPath id="moonClip">
+      <circle cx="256" cy="256" r="220" />
+    </clipPath>
+  </defs>
+  <rect width="512" height="512" fill="#02040a" />
+  <!-- Lunar Body -->
+  <circle cx="256" cy="256" r="220" fill="url(#moonGlow)" />
+  <!-- Lunar Maria (Dark Basalt Basins) -->
+  <g clip-path="url(#moonClip)" opacity="0.45">
+    <ellipse cx="210" cy="170" rx="65" ry="48" fill="#3c3836" />
+    <ellipse cx="300" cy="180" rx="55" ry="40" fill="#383533" />
+    <ellipse cx="260" cy="260" rx="80" ry="55" fill="#363230" />
+    <ellipse cx="160" cy="240" rx="45" ry="38" fill="#423e3c" />
+    <ellipse cx="320" cy="310" rx="40" ry="32" fill="#3d3a38" />
+    <circle cx="180" cy="340" r="30" fill="#403c3a" />
+  </g>
+  <!-- Impact Craters with Bright Rays -->
+  <g clip-path="url(#moonClip)" opacity="0.75">
+    <!-- Tycho & Ray System -->
+    <circle cx="250" cy="390" r="14" fill="#faf8f5" />
+    <circle cx="250" cy="390" r="10" fill="#8f8983" />
+    <path d="M 250,390 L 150,220 M 250,390 L 370,240 M 250,390 L 220,110 M 250,390 L 320,150 M 250,390 L 110,340" stroke="#f2ede4" stroke-width="1.2" opacity="0.4" />
+    <!-- Copernicus -->
+    <circle cx="190" cy="210" r="16" fill="#f5f0e9" />
+    <circle cx="190" cy="210" r="11" fill="#75706a" />
+    <!-- Kepler -->
+    <circle cx="130" cy="230" r="10" fill="#ede8e1" />
+    <circle cx="130" cy="230" r="6" fill="#7d7872" />
+    <!-- Various small craters -->
+    <circle cx="340" cy="140" r="8" fill="#5c5854" />
+    <circle cx="290" cy="110" r="12" fill="#585450" />
+    <circle cx="370" cy="250" r="15" fill="#55514d" />
+  </g>
+</svg>
