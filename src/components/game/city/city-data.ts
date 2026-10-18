@@ -69,4 +69,13 @@ export const FORGE_CITY_DISTRICTS: ZoneLocation[] = [
     targetPhase: "check",
     icon: "🔥",
   },
+  {
+    id: "gitcity",
+    name: "GitCity Software District",
+    sub: "github.com/ethanplusai/gitcity.co · 3D Code City",
+    pos: [0, 0, 36],
+    radius: 8.0,
+    color: "#A78BFA",
+    icon: "🏙️",
+  },
 ];

@@ -3,36 +3,36 @@ import { CITY_MATERIALS } from "./city-materials";
 
 /**
  * Procedural Road & Pavement Network
- * Connects Central Plaza, Space Center, Research Campus, Hangar, and Spaceport
+ * Connects Central Plaza, Space Center, Research Campus, Hangar, Spaceport, and the GitCity District
  */
 export function RoadNetwork() {
   return (
     <group position={[0, 0, 0]}>
-      {/* 1. Main North-South Central Boulevard (Plaza -> Space Center -> Launch Complex) */}
+      {/* 1. Main North-South Central Boulevard (Launch Complex -> Space Center -> Plaza -> GitCity) */}
       {/* Roadbed */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -18]} receiveShadow material={CITY_MATERIALS.asphaltRoad}>
-        <planeGeometry args={[14, 90]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow material={CITY_MATERIALS.asphaltRoad}>
+        <planeGeometry args={[14, 115]} />
       </mesh>
       {/* Road Centerline Dashes */}
-      {Array.from({ length: 18 }).map((_, i) => (
+      {Array.from({ length: 26 }).map((_, i) => (
         <mesh
           key={`dash-ns-${i}`}
           rotation={[-Math.PI / 2, 0, 0]}
-          position={[0, 0.03, 20 - i * 5]}
+          position={[0, 0.03, 52 - i * 4.2]}
           material={CITY_MATERIALS.roadMarking}
         >
-          <planeGeometry args={[0.3, 2.5]} />
+          <planeGeometry args={[0.3, 2.4]} />
         </mesh>
       ))}
       {/* Sidewalks (West & East) */}
-      <mesh position={[-7.75, 0.12, -18]} receiveShadow material={CITY_MATERIALS.curbStone}>
-        <boxGeometry args={[1.5, 0.24, 90]} />
+      <mesh position={[-7.75, 0.12, 0]} receiveShadow material={CITY_MATERIALS.curbStone}>
+        <boxGeometry args={[1.5, 0.24, 115]} />
       </mesh>
-      <mesh position={[7.75, 0.12, -18]} receiveShadow material={CITY_MATERIALS.curbStone}>
-        <boxGeometry args={[1.5, 0.24, 90]} />
+      <mesh position={[7.75, 0.12, 0]} receiveShadow material={CITY_MATERIALS.curbStone}>
+        <boxGeometry args={[1.5, 0.24, 115]} />
       </mesh>
 
-      {/* 2. East-West Avenues (Connecting Research Campus & Rocket Hangar) */}
+      {/* 2. East-West Avenues */}
       {/* South Avenue (z = 12) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 12]} receiveShadow material={CITY_MATERIALS.asphaltRoad}>
         <planeGeometry args={[95, 12]} />
@@ -41,6 +41,10 @@ export function RoadNetwork() {
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -12]} receiveShadow material={CITY_MATERIALS.asphaltRoad}>
         <planeGeometry args={[95, 12]} />
       </mesh>
+      {/* GitCity Software District Avenue (z = 36) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 36]} receiveShadow material={CITY_MATERIALS.asphaltRoad}>
+        <planeGeometry args={[75, 12]} />
+      </mesh>
 
       {/* East-West Dashed Markings */}
       {Array.from({ length: 18 }).map((_, i) => (
@@ -48,6 +52,16 @@ export function RoadNetwork() {
           key={`dash-ew1-${i}`}
           rotation={[-Math.PI / 2, 0, Math.PI / 2]}
           position={[-42 + i * 5, 0.03, 12]}
+          material={CITY_MATERIALS.roadMarking}
+        >
+          <planeGeometry args={[0.3, 2.5]} />
+        </mesh>
+      ))}
+      {Array.from({ length: 14 }).map((_, i) => (
+        <mesh
+          key={`dash-ew-git-${i}`}
+          rotation={[-Math.PI / 2, 0, Math.PI / 2]}
+          position={[-32 + i * 5, 0.03, 36]}
           material={CITY_MATERIALS.roadMarking}
         >
           <planeGeometry args={[0.3, 2.5]} />
@@ -68,7 +82,7 @@ export function RoadNetwork() {
       </mesh>
 
       {/* Street Light Posts with Warm Lighting Pools */}
-      {[-24, -12, 0, 12, 24].map((zPos, idx) => (
+      {[-44, -32, -20, -8, 8, 20, 32, 44].map((zPos, idx) => (
         <group key={`light-ns-${idx}`}>
           {/* West Post */}
           <group position={[-8.8, 0, zPos]}>

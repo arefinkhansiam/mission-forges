@@ -10,6 +10,7 @@ import {
   LaboratoryInterior,
   RocketHangarInterior,
 } from "./EnterableInteriors";
+import { GitCityRepoDistrict } from "./GitCityRepoDistrict";
 import { FORGE_CITY_DISTRICTS } from "./city-data";
 export type { ZoneLocation } from "./city-data";
 export { FORGE_CITY_DISTRICTS };
@@ -202,7 +203,10 @@ export function ForgeCity() {
         </mesh>
       </group>
 
-      {/* 10. District Trigger Rings on Ground */}
+      {/* 10. DISTRICT 7: GITCITY OPEN-SOURCE REPO NEIGHBORHOOD (ethanplusai/gitcity.co) */}
+      <GitCityRepoDistrict position={[0, 0, 36]} />
+
+      {/* 11. District Trigger Rings on Ground */}
       {FORGE_CITY_DISTRICTS.map((z) => (
         <group key={z.id} position={z.pos}>
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>
