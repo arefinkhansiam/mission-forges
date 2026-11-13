@@ -1,6 +1,6 @@
 import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Html, Stars, useGLTF } from "@react-three/drei";
+import { Html, Stars, useGLTF, useTexture } from "@react-three/drei";
 import { useTranslation } from "react-i18next";
 import * as THREE from "three";
 import { BODIES, type BodyId } from "../../lib/nasa-data";
@@ -18,31 +18,45 @@ export function useReducedMotion() {
   return reduced;
 }
 
-const maps: Partial<Record<BodyId, string>> = {
-  Earth: earth.url, Mars: "/textures/nasa-3d/mars.jpg", Moon: "/textures/nasa-3d/moon.jpg",
-  Jupiter: "/textures/nasa-3d/jupiter.jpg", Saturn: "/textures/nasa-3d/saturn.jpg",
+const maps: Record<string, string> = {
+  Earth: earth.url || "/textures/nasa-3d/earth-blue-marble.jpg",
+  Mars: "/textures/nasa-3d/mars.jpg",
+  Moon: "/textures/nasa-3d/moon.jpg",
+  Ceres: "/textures/nasa-3d/europa.webp",
+  Jupiter: "/textures/nasa-3d/jupiter.jpg",
+  Saturn: "/textures/nasa-3d/saturn.jpg",
 };
 
-// Each mounted globe owns its texture. Failed requests retain a readable, untextured globe.
+function TexturedSphere({ url, radius }: { url: string; radius: number }) {
+  const texture = useTexture(url);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return (
+    <mesh>
+      <sphereGeometry args={[radius, 64, 48]} />
+      <meshStandardMaterial map={texture} roughness={0.88} metalness={0.05} />
+    </mesh>
+  );
+}
+
+function FallbackSphere({ radius, color }: { radius: number; color: string }) {
+  return (
+    <mesh>
+      <sphereGeometry args={[radius, 64, 48]} />
+      <meshStandardMaterial color={color} roughness={0.94} />
+    </mesh>
+  );
+}
+
+// Each mounted globe owns its texture with automatic Suspense fallback
 export function Surface({ body, radius = 1 }: { body: BodyId; radius?: number }) {
-  const [texture, setTexture] = useState<THREE.Texture | null>(null);
-  const [failed, setFailed] = useState(false);
-  const { t } = useTranslation();
-  useEffect(() => {
-    let active = true;
-    setTexture(null); setFailed(false);
-    const url = maps[body];
-    if (!url) return;
-    const tex = new THREE.TextureLoader().load(url, loaded => {
-      loaded.colorSpace = THREE.SRGBColorSpace; loaded.anisotropy = 4;
-      if (active) setTexture(loaded);
-    }, undefined, () => { if (active) setFailed(true); });
-    return () => { active = false; tex.dispose(); };
-  }, [body]);
-  return <>
-    <mesh><sphereGeometry args={[radius, 64, 40]} /><meshStandardMaterial key={texture?.uuid ?? "fallback"} map={texture} color={texture ? "#ffffff" : BODIES[body].color} roughness={0.94} /></mesh>
-    {failed && <Html position={[0, -radius - 0.25, 0]} center><span className="mf-asset-label">{t("exp.textureFallback")}</span></Html>}
-  </>;
+  const url = maps[body];
+  const fallbackColor = BODIES[body]?.color || "#b4b8be";
+  return (
+    <Suspense fallback={<FallbackSphere radius={radius} color={fallbackColor} />}>
+      {url ? <TexturedSphere url={url} radius={radius} /> : <FallbackSphere radius={radius} color={fallbackColor} />}
+    </Suspense>
+  );
 }
 
 export function PlanetScene() {
@@ -56,14 +70,20 @@ export function PlanetScene() {
   useFrame((_, dt) => { if (planet.current && !reduced) planet.current.rotation.y += Math.min(dt, 0.05) * 0.025; });
   const x = viewport.width * 0.22;
   return <>
-    <color attach="background" args={["#05090f"]} />
-    <ambientLight intensity={0.16} color="#a4bfd9" />
-    <directionalLight position={[-3, 4, 6]} intensity={2.5} color="#fff4e4" />
-    <Stars radius={70} depth={30} count={quality === "high" ? 1200 : 400} factor={2} fade speed={0} />
+    <color attach="background" args={["#010308"]} />
+    <ambientLight intensity={0.25} color="#1e293b" />
+    <directionalLight position={[-4, 4, 6]} intensity={3.4} color="#fff7ed" />
+    <directionalLight position={[5, -2, -3]} intensity={1.8} color="#00f0ff" />
+    <Stars radius={90} depth={40} count={quality === "high" ? 1800 : 600} factor={2.5} fade speed={0.1} />
     <group position={[x, 0.05, 0]} rotation-z={0.18}>
       <group ref={planet} rotation-y={body === "Earth" ? 2.8 : 0.6}><Surface key={body} body={body} radius={2.28} /></group>
-      {body === "Earth" && <mesh scale={1.012}><sphereGeometry args={[2.28, 48, 24]} /><meshBasicMaterial color="#8ac7ef" transparent opacity={0.13} side={THREE.BackSide} /></mesh>}
-      {body === "Saturn" && <mesh rotation-x={1.14}><ringGeometry args={[2.7, 3.8, 96]} /><meshStandardMaterial color="#b8ac8c" transparent opacity={0.7} side={THREE.DoubleSide} /></mesh>}
+      {body === "Earth" && (
+        <>
+          <mesh scale={1.018}><sphereGeometry args={[2.28, 48, 24]} /><meshBasicMaterial color="#00e5ff" transparent opacity={0.18} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>
+          <mesh scale={1.04}><sphereGeometry args={[2.28, 48, 24]} /><meshBasicMaterial color="#38bdf8" transparent opacity={0.08} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>
+        </>
+      )}
+      {body === "Saturn" && <mesh rotation-x={1.14}><ringGeometry args={[2.7, 3.8, 96]} /><meshStandardMaterial color="#d4c7a5" transparent opacity={0.82} side={THREE.DoubleSide} /></mesh>}
     </group>
   </>;
 }

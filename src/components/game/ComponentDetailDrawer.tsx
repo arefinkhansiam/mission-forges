@@ -126,6 +126,42 @@ export function ComponentDetailDrawer({ item, onClose }: ComponentDetailDrawerPr
         explanation: "Radar echo delay time Δt reveals subsurface dielectric permittivity interface depth (e.g. ice-water boundaries).",
         isRealPhysics: true,
       };
+    } else if (item.id === "magnetometer") {
+      realReference = "Modeled on fluxgate magnetometer booms flown on Voyager 1 & 2, Galileo, Cassini, and Europa Clipper, mounted on deployable carbon fiber booms.";
+      gameModel = "Investigates planetary dynamos and induced magnetic fields (+25 science points). Weighs 60 kg and draws 0.03 kW.";
+      whyItMatters = "Confirms existence of subterranean saline oceans (like Europa and Ganymede) through electromagnetic induction.";
+      physicsCalculation = {
+        formula: "B = μ₀ · (H + M)",
+        explanation: "Measures vector magnetic flux density B to map induced currents in subterranean conducting water layers.",
+        isRealPhysics: true,
+      };
+    } else if (item.id === "drill") {
+      realReference = "Inspired by Perseverance's Coring Drill and the Artemis Lunar South Pole Ice Drill (TRIDENT), extracting deep regolith core samples.";
+      gameModel = "Premier exobiology payload (+50 science points). Weighs 420 kg and draws 0.25 kW.";
+      whyItMatters = "Extracts pristine un-weathered core samples protected from surface cosmic radiation and UV sterilization.";
+      physicsCalculation = {
+        formula: "Torque τ = F · r = P / ω",
+        explanation: "Rotary percussive drilling delivers mechanical impact energy to penetrate basaltic crust and cryogenic ice permafrost.",
+        isRealPhysics: true,
+      };
+    } else if (item.id === "lidar") {
+      realReference = "Based on laser altimeters like LOLA (Lunar Reconnaissance Orbiter) and CALIOP, transmitting nanosecond pulsed laser beams.";
+      gameModel = "Precision topography & landing safety mapper (+30 science points). Weighs 110 kg and draws 0.08 kW.";
+      whyItMatters = "Produces sub-meter 3D digital elevation models (DEM) of craters, boulder fields, and permanently shadowed regions.";
+      physicsCalculation = {
+        formula: "Elevation = Altitude - (c · Δt / 2)",
+        explanation: "Time-of-flight measurement of two-way laser pulse propagation speed in vacuum yielding millimeter distance precision.",
+        isRealPhysics: true,
+      };
+    } else if (item.id === "mass_spec") {
+      realReference = "Inspired by Cassini's INMS, Rosetta's ROSINA, and Curiosity's SAM suite analyzing volatile isotopic ratios.";
+      gameModel = "High-tier atmospheric & plume analyzer (+40 science points). Weighs 180 kg and draws 0.12 kW.";
+      whyItMatters = "Measures D/H (Deuterium/Hydrogen) ratios and noble gas abundances to determine origin and history of water in the Solar System.";
+      physicsCalculation = {
+        formula: "m/z = (e · B² · r²) / (2 · V)",
+        explanation: "Quadrupole and magnetic sector analyzers separate ionized gas molecules based on their exact mass-to-charge ratio.",
+        isRealPhysics: true,
+      };
     } else if (item.id === "drone") {
       realReference = "Inspired by NASA's Ingenuity Mars Helicopter and the upcoming Dragonfly Titan rotorcraft, using dual counter-rotating coaxial rotors to fly through planetary atmospheres.";
       gameModel = "High-tier atmospheric exploration payload (+65 science points). Weighs 280 kg and draws 0.18 kW.";

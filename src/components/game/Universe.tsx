@@ -78,7 +78,34 @@ function Trajectory() {
   const d = designOf(s); const a = analyze(d);
   const depart = ["flight", "encounter", "failure", "rescue"].includes(s.phase) ? rt.departDays : rt.days;
   const pts = Array.from({ length: 81 }, (_, i) => pathPoint(d, i / 80, depart, a.days, new THREE.Vector3()));
-  return <Line points={pts} color="#9fd6ff" lineWidth={2.2} transparent opacity={0.95} />;
+  
+  // Animated pulse dot traveling along the transfer trajectory
+  const pulseRef = useRef<THREE.Mesh>(null);
+  useFrame(({ clock }) => {
+    if (pulseRef.current && pts.length > 1) {
+      const t = (clock.elapsedTime * 0.18) % 1;
+      const idx = Math.min(pts.length - 2, Math.floor(t * (pts.length - 1)));
+      const frac = (t * (pts.length - 1)) - idx;
+      const p1 = pts[idx]!;
+      const p2 = pts[idx + 1]!;
+      pulseRef.current.position.lerpVectors(p1, p2, frac);
+    }
+  });
+
+  return (
+    <group>
+      {/* Outer Cyan Halo */}
+      <Line points={pts} color="#38bdf8" lineWidth={3.5} transparent opacity={0.85} />
+      {/* Core White Energy Beam */}
+      <Line points={pts} color="#ffffff" lineWidth={1.2} transparent opacity={0.9} />
+      {/* Animated Transit Pulse Beacon */}
+      <mesh ref={pulseRef}>
+        <sphereGeometry args={[0.08, 16, 16]} />
+        <meshBasicMaterial color="#38bdf8" />
+        <pointLight color="#38bdf8" intensity={2.5} distance={1.2} />
+      </mesh>
+    </group>
+  );
 }
 
 function Debris({ active }: { active: boolean }) {
@@ -144,6 +171,29 @@ function Rig({ controls }: { controls: React.RefObject<OC | null> }) {
     if (overview) { const far = MISSIONS[mission].body === "Moon" ? 3 : visRadius(BODIES[MISSIONS[mission].body].au) * 1.25 + 4; camera.position.set(0, far * 0.75, far); c.target.set(0, 0, 0); }
     if (phase === "flight" || phase === "encounter" || phase === "failure" || phase === "rescue") { const back = rt.shipDir.clone().multiplyScalar(-0.3); camera.position.copy(rt.shipPos).add(back).add(new THREE.Vector3(0, 0.12, 0)); prev.current.copy(rt.shipPos); }
   }, [phase, overview, mission, camera, controls]);
+
+  useEffect(() => {
+    const handleCamera = (e: Event) => {
+      const action = (e as CustomEvent).detail;
+      const c = controls.current;
+      if (!c) return;
+      if (action === "left") {
+        camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.35);
+      } else if (action === "right") {
+        camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), -0.35);
+      } else if (action === "in") {
+        camera.position.multiplyScalar(0.78);
+      } else if (action === "out") {
+        camera.position.multiplyScalar(1.28);
+      } else if (action === "reset") {
+        const far = MISSIONS[mission].body === "Moon" ? 3 : visRadius(BODIES[MISSIONS[mission].body].au) * 1.25 + 4;
+        camera.position.set(0, far * 0.75, far);
+        c.target.set(0, 0, 0);
+      }
+    };
+    window.addEventListener("mf-camera", handleCamera);
+    return () => window.removeEventListener("mf-camera", handleCamera);
+  }, [camera, controls, mission]);
   useFrame((_, dt) => {
     const c = controls.current; const k = Math.min(dt, 0.05);
     const cockpit = cam === "cockpit" && (phase === "flight" || phase === "encounter");

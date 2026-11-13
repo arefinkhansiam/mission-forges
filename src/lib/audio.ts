@@ -22,8 +22,19 @@ function isMuted(): boolean {
   return useMissionStore.getState().muted;
 }
 
+export function triggerHaptic(pattern: number | number[] = 25) {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator && typeof navigator.vibrate === "function") {
+    try {
+      navigator.vibrate(pattern);
+    } catch {
+      // Graceful fallback on devices that disable vibration
+    }
+  }
+}
+
 export const sfx = {
   click() {
+    triggerHaptic(20);
     if (isMuted()) return;
     const ac = getAudioContext();
     if (!ac) return;
@@ -58,6 +69,7 @@ export const sfx = {
   },
 
   success() {
+    triggerHaptic([30, 20, 50]);
     if (isMuted()) return;
     const ac = getAudioContext();
     if (!ac) return;
@@ -77,6 +89,7 @@ export const sfx = {
   },
 
   alert() {
+    triggerHaptic([60, 40, 60]);
     if (isMuted()) return;
     const ac = getAudioContext();
     if (!ac) return;
@@ -96,6 +109,7 @@ export const sfx = {
   },
 
   thrust() {
+    triggerHaptic(40);
     if (isMuted()) return;
     const ac = getAudioContext();
     if (!ac) return;

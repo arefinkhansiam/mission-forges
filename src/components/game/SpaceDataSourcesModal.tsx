@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   X,
@@ -57,6 +57,21 @@ export function SpaceDataSourcesModal({ isOpen, onClose, initialAgency }: SpaceD
   const stats = useMemo(() => getSpaceDataAuditStats(), []);
   const agencySummaries = useMemo(() => getAgencyAuditSummaries(), []);
 
+  // Keyboard accessibility and body scroll lock
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen, onClose]);
+
   const filteredSources = useMemo(() => {
     return filterSpaceDataSources({
       agency: selectedAgency,
@@ -79,42 +94,42 @@ export function SpaceDataSourcesModal({ isOpen, onClose, initialAgency }: SpaceD
     switch (status) {
       case "LIVE":
         return {
-          bg: "rgba(16, 185, 129, 0.2)",
-          color: "#34d399",
-          border: "rgba(16, 185, 129, 0.5)",
+          bg: "rgba(53, 211, 154, 0.15)",
+          color: "#35D39A",
+          border: "rgba(53, 211, 154, 0.4)",
           label: "LIVE CONNECTION",
           desc: "Actually connected and returning current data.",
         };
       case "CACHED":
         return {
-          bg: "rgba(245, 158, 11, 0.2)",
-          color: "#fbbf24",
-          border: "rgba(245, 158, 11, 0.5)",
+          bg: "rgba(255, 181, 71, 0.15)",
+          color: "#FFB547",
+          border: "rgba(255, 181, 71, 0.4)",
           label: "CACHED OFFICIAL",
           desc: "Previously retrieved official data stored locally.",
         };
       case "AVAILABLE":
         return {
-          bg: "rgba(56, 189, 248, 0.2)",
-          color: "#38bdf8",
-          border: "rgba(56, 189, 248, 0.5)",
+          bg: "rgba(53, 185, 255, 0.15)",
+          color: "#35B9FF",
+          border: "rgba(53, 185, 255, 0.4)",
           label: "AVAILABLE PORTAL",
           desc: "Official source discovered and verified, public interface available.",
         };
       case "DEMO":
         return {
-          bg: "rgba(168, 85, 247, 0.2)",
-          color: "#c084fc",
-          border: "rgba(168, 85, 247, 0.5)",
+          bg: "rgba(124, 108, 255, 0.15)",
+          color: "#7C6CFF",
+          border: "rgba(124, 108, 255, 0.4)",
           label: "DEMO SPECIMEN",
           desc: "Synthetic / static demonstration data.",
         };
       case "UNAVAILABLE":
       default:
         return {
-          bg: "rgba(148, 163, 184, 0.15)",
-          color: "#94a3b8",
-          border: "rgba(148, 163, 184, 0.3)",
+          bg: "rgba(166, 180, 200, 0.12)",
+          color: "#A6B4C8",
+          border: "rgba(166, 180, 200, 0.25)",
           label: "NO PUBLIC API",
           desc: "DISCOVERED — NO VERIFIED PUBLIC API FOUND.",
         };
@@ -123,30 +138,15 @@ export function SpaceDataSourcesModal({ isOpen, onClose, initialAgency }: SpaceD
 
   return (
     <div
-      className="gm-backdrop"
+      className="pointer-events-auto fixed inset-0 z-40 grid place-items-center bg-[#070B14]/85 p-4 backdrop-blur-md animate-fade-in"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="spacedata-title"
-      style={{ zIndex: 9999 }}
     >
       <section
-        className="gm-dialog"
+        className="relative z-50 flex flex-col w-full max-w-5xl max-h-[88vh] rounded-2xl border border-[#26364D] bg-[#111C2E] p-6 shadow-2xl text-[#F3F7FF] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "min(96vw, 1120px)",
-          maxHeight: "90vh",
-          display: "flex",
-          flexDirection: "column",
-          padding: "24px",
-          background: "#040b1df2",
-          border: "1px solid #1e3a6d",
-          borderRadius: "16px",
-          boxShadow: "0 25px 70px rgba(0,0,0,0.85), 0 0 50px rgba(28, 77, 150, 0.25)",
-          backdropFilter: "blur(24px)",
-          color: "#e6f1ff",
-          overflow: "hidden",
-        }}
       >
         {/* Header */}
         <header

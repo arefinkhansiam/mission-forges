@@ -63,6 +63,18 @@ export function LearnLab() {
   const [step, setStep] = useState(0);
   const id = (IDS as string[]).includes(s.learn ?? "") ? (s.learn as CId) : null;
   useEffect(() => { setStep(0); voice.stop(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && s.learn) {
+        voice.stop();
+        s.set({ learn: null });
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [s, voice]);
+
   if (!s.learn) return null;
   const rtl = LANGS.find((l) => l.id === s.lang && "rtl" in l);
   const steps = t("ui.steps", { returnObjects: true }) as string[];

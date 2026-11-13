@@ -62,14 +62,37 @@ The **Tsiolkovsky Rocket Equation** and the **Inverse-Square Law of Solar Radiat
 ## Key Features
 
 - **9 Solar System Destinations:** Earth, Moon, Mars, Mercury, Europa, Titan, Ceres, Jupiter, and Saturn with authentic planetary gravities, scale heights, and surface environments.
-- **Official NASA 3D Resources:** 11 flight-proven spacecraft 3D models (`.glb`) and 8 authentic planetary cylindrical surface maps (`.webp`/`.jpg`) sourced directly from NASA Centers (JPL-Caltech, GSFC, JSC, Langley).
-- **Tsiolkovsky Rocket Equation Engine:** Live dynamic calculation of $\Delta v = I_{\text{sp}} \cdot g_0 \cdot \ln(m_{\text{wet}} / m_{\text{dry}})$ with authentic propulsion systems (Hydrolox RL10, Methalox Raptor, Xenon Ion NSTAR, Hall Thruster HERMeS).
-- **Multi-Agency Open Data Platform:** Comprehensive catalog and discovery engine for NASA and all 17 Space Apps Challenge 2026 partner space agencies (ESA, JAXA, CSA, DLR, UKSA, ISRO, ASI, CNES, and more).
+- **3D Forge City Campus:** Explorable digital twin of an aerospace operations center featuring real NASA 3D hardware (Saturn V on Pad 39X, Apollo Lunar Module, Ingenuity helicopter, Voyager probe).
+- **Anti-Gravity Physics & Delta-V Reduction:** Calibrate speculative anti-gravity lift fields reducing gravitational losses and cutting required launch $\Delta v$ by up to 40%.
+- **Mobile-First Dual Input Control:** Responsive virtual analog thumbstick with tactile sprint, inspect, and launch triggers for smartphones and tablets.
+- **Ayesha AI Voice Mentor:** Built-in speech synthesis providing real-time educational aerospace guidance and closed captions for K-12 students.
+- **Official NASA 3D Resources:** Flight-proven spacecraft 3D models (`.glb`) and authentic planetary cylindrical surface maps sourced directly from NASA Centers.
+- **Tsiolkovsky Rocket Equation Engine:** Live dynamic calculation of $\Delta v = I_{\text{sp}} \cdot g_0 \cdot \ln(m_{\text{wet}} / m_{\text{dry}})$ with authentic propulsion systems (Hydrolox RL10, Methalox Raptor, Xenon Ion NSTAR, NERVA Nuclear Thermal).
+- **Multi-Agency Open Data Platform:** Comprehensive catalog and discovery engine for NASA and all 17 Space Apps Challenge 2026 partner space agencies.
 - **Flight Director GO/NO-GO Launch Poll:** Actively evaluates real-time space weather using NASA DONKI flare telemetry; holds launch if geomagnetic solar storms are detected.
-- **Real-Time Astronomical Calculations:** Real distances and speed-of-light communications delay ($t_{\text{delay}} = d / c$) computed live via NASA JPL Horizons ephemerides.
-- **3D Staged Launch & Flight:** SLS Block 1 staged ascent (SRB jettison, Core Stage MECO, orbital insertion), 6-DOF docking rendezvous, and atmospheric entry.
-- **Failure & Recovery Architecture:** Non-lethal contingency diagnostics in the `rescue` phase teaching real aerospace problem-solving (e.g., Apollo 13 / SOHO recovery).
-- **Interactive Science Data Center:** Deep exploration suite for APOD, NeoWs asteroids, DSCOVR EPIC, Mars Rover imagery, JPL SBDB, and Sentry impact risk.
+- **Real-Time Astronomical Calculations:** Real distances and speed-of-light communications delay computed live via NASA JPL Horizons ephemerides.
+
+---
+
+## Master Architecture & Specification Documents
+
+This repository contains a full 16-document engineering and game design suite:
+
+1. [PRD.md](./PRD.md) — Product Requirements Document (NASA Space Apps 2026 Challenge 13)
+2. [DESIGN.md](./DESIGN.md) — Game Design Document, Cyber-Glass HUD, Mobile Touch Architecture
+3. [ARCHITECTURE.md](./ARCHITECTURE.md) — System Architecture, Scene Graph, Pierced-Prop Polyfill
+4. [DATABASE.md](./DATABASE.md) — OGC 3DCityDB Urban Schema & Supabase Telemetry Tables
+5. [API.md](./API.md) — NASA JPL Horizons, APOD, NSSDCA, and Internal Server Endpoints
+6. [AGENTS.md](./AGENTS.md) — Ayesha Mentor AI, Flight Director, and FDO Autonomous Agents
+7. [IMPLEMENTATION.md](./IMPLEMENTATION.md) — Mathematical Rocket Equations & Kinematics Engine
+8. [SETUP.md](./SETUP.md) — Complete Local Development, Bun/Node, and Docker Deployment Guide
+9. [DEVELOPMENT.md](./DEVELOPMENT.md) — R3F Component Guidelines & Mobile Design Rules
+10. [SECURITY.md](./SECURITY.md) — Client-side Sandboxing, CSP Headers, and Key Protection
+11. [MCP_CONNECTION.md](./MCP_CONNECTION.md) — Model Context Protocol Specs for External AI Tools
+12. [INTEGRATIONS.md](./INTEGRATIONS.md) — Open-Source 3D Repositories (GitCity, NASA, Kenney, Quaternius)
+13. [QA_TESTING.md](./QA_TESTING.md) — Verification Matrix & Delta-V Mathematical Test Cases
+14. [DEBUGGING.md](./DEBUGGING.md) — Root Cause Analysis of Pierced Properties & R3F Stability
+15. [CHALLENGE_13_ALIGNMENT.md](./CHALLENGE_13_ALIGNMENT.md) — Full Scoring Rubric Alignment for Challenge #13
 
 ---
 

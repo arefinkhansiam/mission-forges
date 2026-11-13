@@ -6,7 +6,16 @@ export type EngineId = "chemical" | "ion" | "nuclear";
 export type MissionId = "Moon" | "Mars" | "Ceres" | "Jupiter" | "Saturn";
 export type RouteId = "safe" | "fast" | "science" | "risky";
 export type EncounterChoice = "shield" | "boost" | "reroute";
-export type Instrument = "camera" | "spectrometer" | "radiation";
+export type Instrument =
+  | "camera"
+  | "spectrometer"
+  | "radiation"
+  | "magnetometer"
+  | "radar"
+  | "drill"
+  | "lidar"
+  | "mass_spec"
+  | "drone";
 
 export const G0 = 9.80665;
 export const DRY_BASE = 6000; // kg crew/avionics module — game estimate
@@ -25,10 +34,16 @@ export const ENGINES: Record<EngineId, { name: string; isp: number; mass: number
   nuclear: { name: "NERVA nuclear thermal", isp: 841, mass: 10000, kw: 0.5, thrust: "333 kN", note: "Efficient and powerful, but very heavy", source: SOURCES.nerva },
 };
 
-export const INSTRUMENTS: Record<Instrument, { name: string; mass: number; kw: number; science: number }> = {
-  camera: { name: "Imaging camera", mass: 150, kw: 0.05, science: 35 },
-  spectrometer: { name: "Spectrometer", mass: 320, kw: 0.1, science: 45 },
-  radiation: { name: "Radiation monitor", mass: 90, kw: 0.02, science: 15 },
+export const INSTRUMENTS: Record<Instrument, { name: string; mass: number; kw: number; science: number; desc: string }> = {
+  camera: { name: "HiRISE Optical Camera", mass: 150, kw: 0.05, science: 35, desc: "High-resolution color surface geology imager" },
+  spectrometer: { name: "CRISM Mineral Spectrometer", mass: 320, kw: 0.1, science: 45, desc: "Hyperspectral infrared mineral mapping" },
+  radiation: { name: "RAD Radiation Detector", mass: 90, kw: 0.02, science: 20, desc: "Cosmic ray & solar energetic particle sensor" },
+  magnetometer: { name: "Fluxgate Magnetometer Boom", mass: 60, kw: 0.03, science: 25, desc: "Planetary magnetic field & dynamo probe" },
+  radar: { name: "RIMFAX Subsurface Ice Radar", mass: 210, kw: 0.15, science: 40, desc: "Ground-penetrating radar for subterranean water ice" },
+  drill: { name: "Regolith Core Sampling Drill", mass: 420, kw: 0.25, science: 50, desc: "Deep crustal extraction & bio-signature sampler" },
+  lidar: { name: "Planetary LiDAR Altimeter", mass: 110, kw: 0.08, science: 30, desc: "Precision 3D elevation & landing hazard mapper" },
+  mass_spec: { name: "Atmospheric Mass Spectrometer", mass: 180, kw: 0.12, science: 40, desc: "Neutral & ion atmospheric isotope analyzer" },
+  drone: { name: "Aerial Drone Scout (Ingenuity)", mass: 280, kw: 0.18, science: 65, desc: "Autonomous coaxial rotorcraft for aerial planetary scouting" },
 };
 
 // Δv from low Earth orbit to target orbit — approximate values from NASA/JPL Δv budgets.
@@ -50,6 +65,7 @@ export const ROUTES: Record<RouteId, { name: string; dv: number; time: number; h
 export type Design = {
   mission: MissionId; route: RouteId; engine: EngineId; engines: number; tanks: number; wings: number;
   rtgs: number; antennas: number; shield: boolean; battery: boolean; instruments: Instrument[]; fuel: number;
+  antiGravityLift?: number | undefined;
 };
 
 export function analyze(d: Design) {
@@ -59,7 +75,10 @@ export function analyze(d: Design) {
   const propellant = (d.tanks * TANK_PROP * d.fuel) / 100;
   const wet = dry + propellant;
   const dv = (e.isp * G0 * Math.log(wet / dry)) / 1000;
-  const required = m.dv * r.dv;
+  // Anti-Gravity Field: Reduces gravitational losses during launch and ascent (up to 40% reduction)
+  const agFactor = typeof d.antiGravityLift === "number" ? Math.max(0, Math.min(1, d.antiGravityLift)) : 0;
+  const gravityReduction = agFactor * 0.40;
+  const required = +(m.dv * r.dv * (1 - gravityReduction)).toFixed(2);
   const dvMargin = (dv - required) / required;
   const au = d.mission === "Moon" ? 1 : BODIES[m.body].au;
   const avg = (1 + au) / 2; // average heliocentric distance over transfer

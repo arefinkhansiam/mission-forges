@@ -71,27 +71,34 @@ export function DataCenterModal({ isOpen, onClose, initialTab = "feeds" }: DataC
     fetchSource("sentry");
   }, [isOpen, callNasa]);
 
+  // Keyboard accessibility and body scroll lock
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="gm-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="datacenter-title">
+    <div
+      className="pointer-events-auto fixed inset-0 z-40 grid place-items-center bg-[#070B14]/85 p-4 backdrop-blur-md animate-fade-in"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="datacenter-title"
+    >
       <section
-        className="gm-dialog"
+        className="relative z-50 flex flex-col w-full max-w-5xl max-h-[88vh] rounded-2xl border border-[#26364D] bg-[#111C2E] p-6 shadow-2xl text-[#F3F7FF] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "min(96vw, 980px)",
-          maxHeight: "88vh",
-          display: "flex",
-          flexDirection: "column",
-          padding: "24px",
-          background: "#050f24f2",
-          border: "1px solid #1c3d73",
-          borderRadius: "16px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(16,78,168,0.3)",
-          backdropFilter: "blur(20px)",
-          color: "#e6f1ff",
-          overflow: "hidden",
-        }}
       >
         {/* Header */}
         <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #142e58", paddingBottom: "16px", marginBottom: "16px" }}>

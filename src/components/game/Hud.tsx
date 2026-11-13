@@ -1,8 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { ReadinessPanel, MissionReport } from "./MissionPanels";
 import { GameScreens } from "./GameScreens";
-import { useMemo, useState, type ReactNode } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, Compass, Crosshair, Database, Eye, FastForward, Flame as FlameIcon, Info, Radio, RefreshCcw, Rocket, Satellite, ScanLine, Settings, ShieldCheck, Wrench, X, Zap } from "lucide-react";
+import { AAALobbyHUD } from "./AAALobbyHUD";
+import { MissionTopMap } from "./MissionTopMap";
+import { useMemo, useState, useEffect, type ReactNode } from "react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Building2, Check, Compass, Crosshair, Database, Eye, FastForward, Flame as FlameIcon, GraduationCap, Info, Radio, RefreshCcw, Rocket, Satellite, ScanLine, Settings, ShieldCheck, Wrench, X, Zap } from "lucide-react";
 import { AU_KM, BODIES, LIGHT_KM_S, SOURCES, SPACECRAFT_OBJECTS, PLANET_ORDER } from "../../lib/nasa-data";
 import { analyze, CAUSE_TEXT, ENGINES, finalScore, fmt, G0, INSTRUMENTS, landingStages, LAUNCH_LIMIT, MISSIONS, RESCUE_KITS, rescuePlan, resolveEncounter, ROOT_CAUSE, ROUTES, RTG_KW, WING_KW, type EngineId, type Instrument, type MissionId, type RouteId, type EncounterChoice } from "../../lib/mission-sim";
 import { MissionBrief } from "./MissionBrief";
@@ -10,43 +12,71 @@ import { GoPoll } from "./GoPoll";
 import { designOf, useMissionStore, type Phase } from "../../stores/mission-store";
 import { launchProfile } from "./Stages";
 import { pathAU, rt, useTick } from "./runtime";
+import { generateMissionAutopsy } from "../../lib/curriculum";
+import { CurriculumModal } from "./CurriculumModal";
 
-const PHASE_TITLE: Record<Phase, string> = { menu: "", missions: "Mission Selection", brief: "Mission Brief", route: "Route Planning", routePreview: "Route Preview", objectives: "Mission Objectives", budget: "Mission Budget", fuel: "Fuel Plan", power: "Power Plan", comms: "Communications", instruments: "Instruments", overview: "Mission Overview", craft: "Spacecraft Selection", build: "Spacecraft Builder", check: "Mission Check", launch: "Launch Sequence", flight: "Deep Space Flight", encounter: "Hazard Encounter", failure: "Failure & Black Box", rescue: "Rescue Mission", docking: "Rendezvous & Repair", landing: "Entry, Descent & Landing", report: "Mission Report" };
+const PHASE_TITLE: Record<Phase, string> = { city: "Forge City Hub", menu: "", missions: "Mission Selection", brief: "Mission Brief", route: "Route Planning", routePreview: "Route Preview", objectives: "Mission Objectives", budget: "Mission Budget", fuel: "Fuel Plan", power: "Power Plan", comms: "Communications", instruments: "Instruments", overview: "Mission Overview", craft: "Spacecraft Selection", build: "Spacecraft Builder", check: "Mission Check", launch: "Launch Sequence", flight: "Deep Space Flight", encounter: "Hazard Encounter", failure: "Failure & Black Box", rescue: "Rescue Mission", docking: "Rendezvous & Repair", landing: "Entry, Descent & Landing", "lunar-recon": "Lunar Reconnaissance", report: "Mission Report" };
 
 function Panel({ children, className = "", title, icon }: { children: ReactNode; className?: string; title?: string; icon?: ReactNode }) {
-  return <section className={`mf-panel pointer-events-auto p-3 sm:p-4 ${className}`}>{title && <h3 className="mb-3 flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.18em] text-cyan-soft">{icon}{title}</h3>}{children}</section>;
+  return <section className={`mf-panel pointer-events-auto p-3 sm:p-4 ${className}`}>{title && <h3 className="mb-3 flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.14em] text-[#00F0FF]">{icon}{title}</h3>}{children}</section>;
 }
 function Btn({ children, onClick, tone = "primary", disabled, icon, className = "" }: { children: ReactNode; onClick?: () => void; tone?: "primary" | "ghost" | "danger"; disabled?: boolean | undefined; icon?: ReactNode; className?: string }) {
-  const t = tone === "primary" ? "bg-primary text-primary-foreground shadow-[0_0_24px_color-mix(in_oklab,var(--primary)_45%,transparent)]" : tone === "danger" ? "bg-danger/85 text-foreground" : "bg-secondary/80 text-foreground hover:bg-secondary";
-  return <button disabled={disabled} onClick={onClick} className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-xs font-bold uppercase tracking-[0.14em] transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-35 ${t} ${className}`}>{icon}{children}</button>;
+  const t = tone === "primary" ? "bg-gradient-to-r from-[#00F0FF] to-[#0284C7] text-[#070B14] shadow-[0_0_18px_rgba(53,185,255,0.35)] hover:brightness-110" : tone === "danger" ? "bg-[#FF5D73]/20 text-[#FF5D73] border border-[#FF5D73]/40 hover:bg-[#FF5D73]/30" : "bg-[#050B18]/80 text-[#A6B4C8] hover:text-[#F3F7FF] border border-[#162746] hover:bg-[#081226]";
+  return <button disabled={disabled} onClick={onClick} className={`inline-flex h-9 items-center justify-center gap-2 rounded-xl px-3.5 text-xs font-bold uppercase tracking-[0.1em] transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer ${t} ${className}`}>{icon}{children}</button>;
 }
 function Bar({ label, value, tone = "primary", right }: { label: string; value: number; tone?: "primary" | "success" | "warning" | "danger"; right?: string }) {
-  const c = { primary: "bg-primary", success: "bg-success", warning: "bg-warning", danger: "bg-danger" }[tone];
-  return <div className="text-[13px]"><div className="mb-1 flex justify-between text-muted-foreground"><span>{label}</span><span className="mf-mono text-foreground">{right ?? `${Math.round(value)}%`}</span></div><div className="h-1.5 overflow-hidden rounded-full bg-secondary"><div className={`h-full rounded-full ${c} transition-all duration-500`} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} /></div></div>;
+  const c = { primary: "bg-[#00F0FF]", success: "bg-[#35D39A]", warning: "bg-[#FFB547]", danger: "bg-[#FF5D73]" }[tone];
+  return <div className="text-xs"><div className="mb-1 flex justify-between text-[#A6B4C8]"><span>{label}</span><span className="mf-mono text-[#F3F7FF]">{right ?? `${Math.round(value)}%`}</span></div><div className="h-1.5 overflow-hidden rounded-full bg-[#050B18] border border-[#162746]/60"><div className={`h-full rounded-full ${c} transition-all duration-500`} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} /></div></div>;
 }
-function Row({ k, v, tone = "" }: { k: string; v: ReactNode; tone?: string }) { return <div className="flex justify-between gap-3 text-[13px]"><span className="text-muted-foreground">{k}</span><b className={`mf-mono font-normal ${tone}`}>{v}</b></div>; }
-function Tip({ children }: { children: ReactNode }) { return <p className="mt-3 flex gap-2 rounded-lg bg-primary/10 p-2.5 text-[10.5px] leading-4 text-cyan-soft"><Info size={13} className="mt-0.5 shrink-0 text-primary" /><span>{children}</span></p>; }
+function Row({ k, v, tone = "" }: { k: string; v: ReactNode; tone?: string }) { return <div className="flex justify-between gap-3 text-xs"><span className="text-[#A6B4C8]">{k}</span><b className={`mf-mono font-normal ${tone}`}>{v}</b></div>; }
+function Tip({ children }: { children: ReactNode }) { return <p className="mt-3 flex gap-2 rounded-xl bg-[#050B18] border border-[#162746] p-2.5 text-[11px] leading-relaxed text-[#A6B4C8]"><Info size={13} className="mt-0.5 shrink-0 text-[#00F0FF]" /><span>{children}</span></p>; }
 function Stepper({ label, value, min, max, onChange, sub }: { label: string; value: number; min: number; max: number; onChange: (v: number) => void; sub?: string }) {
-  return <div className="flex items-center justify-between rounded-lg bg-secondary/60 px-3 py-2"><div><b className="block text-xs">{label}</b>{sub && <small className="text-[13px] text-muted-foreground">{sub}</small>}</div><div className="flex items-center gap-2"><button aria-label={`Remove ${label}`} disabled={value <= min} onClick={() => onChange(value - 1)} className="grid size-8 place-items-center rounded-md bg-background/60 text-lg disabled:opacity-30">−</button><span className="mf-mono w-5 text-center">{value}</span><button aria-label={`Add ${label}`} disabled={value >= max} onClick={() => onChange(value + 1)} className="grid size-8 place-items-center rounded-md bg-background/60 text-lg disabled:opacity-30">+</button></div></div>;
+  return <div className="flex items-center justify-between rounded-xl bg-[#050B18] border border-[#162746] px-3 py-2"><div><b className="block text-xs text-[#F3F7FF]">{label}</b>{sub && <small className="text-[11px] text-[#A6B4C8]">{sub}</small>}</div><div className="flex items-center gap-2"><button aria-label={`Remove ${label}`} disabled={value <= min} onClick={() => onChange(value - 1)} className="grid size-7 place-items-center rounded-lg bg-[#081226] border border-[#162746] text-sm text-[#F3F7FF] hover:bg-[#16243B] disabled:opacity-30 cursor-pointer">−</button><span className="mf-mono w-5 text-center text-[#00F0FF] font-bold text-xs">{value}</span><button aria-label={`Add ${label}`} disabled={value >= max} onClick={() => onChange(value + 1)} className="grid size-7 place-items-center rounded-lg bg-[#081226] border border-[#162746] text-sm text-[#F3F7FF] hover:bg-[#16243B] disabled:opacity-30 cursor-pointer">+</button></div></div>;
 }
 function Toggle({ label, on, onClick, sub }: { label: string; on: boolean; onClick: () => void; sub?: string }) {
-  return <button onClick={onClick} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition ${on ? "bg-primary/20" : "bg-secondary/60"}`}><span><b className="block text-xs">{label}</b>{sub && <small className="text-[13px] text-muted-foreground">{sub}</small>}</span><span className={`relative h-5 w-9 rounded-full transition ${on ? "bg-primary" : "bg-background/70"}`}><span className={`absolute top-0.5 size-4 rounded-full bg-foreground transition-all ${on ? "left-4" : "left-0.5"}`} /></span></button>;
+  return <button onClick={onClick} className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition border cursor-pointer ${on ? "bg-[#00F0FF]/15 border-[#00F0FF]/50" : "bg-[#050B18] border-[#162746]"}`}><span><b className="block text-xs text-[#F3F7FF]">{label}</b>{sub && <small className="text-[11px] text-[#A6B4C8]">{sub}</small>}</span><span className={`relative h-5 w-9 rounded-full transition ${on ? "bg-[#00F0FF]" : "bg-[#162746]"}`}><span className={`absolute top-0.5 size-4 rounded-full bg-[#F3F7FF] transition-all ${on ? "left-4" : "left-0.5"}`} /></span></button>;
 }
 const toneOf = (v: number, g = 60, o = 30) => (v >= g ? "success" : v >= o ? "warning" : "danger") as "success" | "warning" | "danger";
 
 export function Logo({ big = false }: { big?: boolean }) {
   return (
     <div className="flex items-center gap-3 select-none">
-      <svg viewBox="0 0 64 64" className={big ? "size-16 sm:size-20" : "size-8"} aria-hidden>
-        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--cyan-soft)" /><stop offset="1" stopColor="var(--primary)" /></linearGradient></defs>
-        <circle cx="32" cy="32" r="11" fill="url(#lg)" />
-        <ellipse cx="32" cy="32" rx="28" ry="10" fill="none" stroke="url(#lg)" strokeWidth="2.5" transform="rotate(-28 32 32)" />
-        <path d="M50 13 l4 -4 l1 6 z" fill="var(--foreground)" />
-        <circle cx="10" cy="44" r="2.4" fill="var(--foreground)" />
+      <svg viewBox="0 0 64 64" className={big ? "size-16 sm:size-20" : "size-8 sm:size-9"} aria-hidden>
+        <defs>
+          <linearGradient id="nexus-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#00f0ff" />
+            <stop offset="50%" stopColor="#3b82f6" />
+            <stop offset="100%" stopColor="#8b5cf6" />
+          </linearGradient>
+        </defs>
+        {/* Orbital Trajectory Ring */}
+        <ellipse cx="32" cy="32" rx="28" ry="11" fill="none" stroke="#00f0ff" strokeWidth="2.2" strokeDasharray="3 1" transform="rotate(-30 32 32)" opacity="0.85" />
+        {/* Core Celestial Sphere */}
+        <circle cx="32" cy="32" r="11" fill="url(#nexus-grad)" />
+        <circle cx="28" cy="28" r="3.5" fill="#ffffff" opacity="0.75" />
+        {/* Hypersonic Delta Apex */}
+        <path d="M50 12 L56 6 L58 14 Z" fill="#00f0ff" />
+        {/* Stellar Satellites */}
+        <circle cx="9" cy="46" r="2.5" fill="#f59e0b" />
+        <circle cx="53" cy="20" r="1.8" fill="#10b981" />
       </svg>
-      <div className="leading-none">
-        <div className={`font-bold tracking-[0.22em] text-foreground ${big ? "text-4xl sm:text-6xl" : "text-sm"}`} style={{ textShadow: "0 0 24px color-mix(in oklab, var(--primary) 60%, transparent)" }}>MISSION<span className="text-primary"> FORGE</span></div>
-        {big && <div className="mt-3 text-[13px] tracking-[0.42em] text-cyan-soft sm:text-sm">DESIGN · EXPLORE · DECIDE · SURVIVE</div>}
+      <div className="leading-tight">
+        <div
+          className={`font-black tracking-[0.2em] text-white flex items-center gap-1.5 ${
+            big ? "text-3xl sm:text-5xl" : "text-sm sm:text-base"
+          }`}
+          style={{ textShadow: "0 0 20px rgba(0, 240, 255, 0.6)" }}
+        >
+          MISSION<span className="text-cyan-400">FORGE</span>
+          <span className="rounded bg-cyan-500/20 px-1.5 py-0.5 text-[9px] font-mono font-bold tracking-widest text-cyan-300 border border-cyan-400/40">
+            NEXUS-26
+          </span>
+        </div>
+        {big && (
+          <div className="mt-2 text-xs font-mono tracking-[0.35em] text-cyan-300/80 sm:text-sm">
+            NASA SPACE APPS · DEEP SPACE MISSION ENGINE
+          </div>
+        )}
       </div>
     </div>
   );
@@ -58,29 +88,92 @@ function StatusFeed() {
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
-  return <div className="pointer-events-auto absolute inset-0 z-30 grid place-items-center bg-background/70 p-4 backdrop-blur-sm"><Panel className="max-h-[85%] w-full max-w-2xl overflow-auto"><div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold uppercase tracking-[0.2em]">{title}</h2><button aria-label="Close" onClick={onClose} className="grid size-8 place-items-center rounded-md bg-secondary"><X size={16} /></button></div>{children}</Panel></div>;
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="pointer-events-auto fixed inset-0 z-40 grid place-items-center bg-[#070B14]/85 p-4 backdrop-blur-md animate-fade-in"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="relative z-50 max-h-[85vh] w-full max-w-2xl overflow-auto rounded-2xl border border-[#162746] bg-[#081226] p-5 shadow-2xl text-[#F3F7FF] scrollbar-thin"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between border-b border-[#162746] pb-3">
+          <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-[#00F0FF]">{title}</h2>
+          <button aria-label="Close" onClick={onClose} className="grid size-8 place-items-center rounded-lg bg-[#050B18] border border-[#162746] text-[#A6B4C8] hover:text-[#F3F7FF] transition cursor-pointer">
+            <X size={16} />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 // ---------------- Screens ----------------
 function Menu() {
-  const s = useMissionStore(); const [modal, setModal] = useState<"data" | "settings" | null>(null);
+  const s = useMissionStore(); const [modal, setModal] = useState<"data" | "settings" | "antigravity" | null>(null);
+  const a = analyze(designOf(s));
   return (
     <div className="absolute inset-0 flex flex-col justify-center gap-8 p-6 sm:p-12">
       <div className="animate-fade-in"><Logo big /></div>
-      <div className="pointer-events-auto flex max-w-xs flex-col gap-2">
-        <Btn icon={<Rocket size={15} />} onClick={() => { s.newRun("missions"); s.say("New mission — choose a destination"); }}>Start mission</Btn>
-        {s.attempts > 0 && <Btn tone="ghost" icon={<Wrench size={15} />} onClick={() => s.go("build")}>Continue design</Btn>}
-        <Btn tone="ghost" icon={<Database size={15} />} onClick={() => setModal("data")}>NASA data sources</Btn>
-        <Btn tone="ghost" icon={<Settings size={15} />} onClick={() => setModal("settings")}>Settings</Btn>
+      <div className="pointer-events-auto flex max-w-xs flex-col gap-2.5">
+        <Btn icon={<Rocket size={15} />} onClick={() => { s.newRun("missions"); s.say("New mission — choose a destination"); }}>Start Mission Control</Btn>
+        <Btn tone="ghost" icon={<Wrench size={15} />} onClick={() => s.go("build")}>Spacecraft Forge & Payload</Btn>
+        <Btn tone="ghost" icon={<Zap size={15} className="text-cyan-400" />} onClick={() => setModal("antigravity")}>Anti-Gravity Uplink</Btn>
+        <Btn tone="ghost" icon={<Database size={15} />} onClick={() => setModal("data")}>NASA Live Data Sources</Btn>
+        <Btn tone="ghost" icon={<Settings size={15} />} onClick={() => setModal("settings")}>Settings & Audio</Btn>
       </div>
-      <p className="max-w-sm text-[13px] text-muted-foreground">Planet positions shown live from NASA/JPL orbital elements for today's date. Distances are compressed for viewing; all calculations use real values.</p>
+      <p className="max-w-sm text-[13px] text-slate-400">Planet positions and trajectory calculations computed from real NASA/JPL ephemeris vectors. Distances compressed for visual tracking.</p>
+
+      {modal === "antigravity" && <Modal title="Anti-Gravity Field Matrix" onClose={() => setModal(null)}>
+        <div className="space-y-4 text-xs">
+          <p className="text-slate-300">
+            The speculative Anti-Gravity field damps local gravitational losses during atmospheric ascent and orbital injection. Higher field intensity reduces the required Delta-V for lunar and planetary missions.
+          </p>
+          <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/30 p-4">
+            <div className="flex justify-between font-mono text-cyan-300">
+              <span>FIELD INTENSITY SCALAR</span>
+              <span>{Math.round((s.antiGravityLift ?? 0.5) * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={Math.round((s.antiGravityLift ?? 0.5) * 100)}
+              onChange={(e) => s.set({ antiGravityLift: +e.target.value / 100 })}
+              className="mt-2 w-full accent-cyan-400"
+            />
+            <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-slate-300">
+              <div>Δv Savings: <b className="text-cyan-300">-{Math.round((s.antiGravityLift ?? 0.5) * 40)}%</b></div>
+              <div>Required Δv: <b className="text-emerald-300">{a.required.toFixed(2)} km/s</b></div>
+            </div>
+          </div>
+          <Btn onClick={() => setModal(null)} className="w-full">Engage Field Configuration</Btn>
+        </div>
+      </Modal>}
+
       {modal === "data" && <Modal title="NASA Data Center" onClose={() => setModal(null)}>
-        <table className="w-full text-left text-[13px]"><thead className="text-muted-foreground"><tr><th className="py-1">Body</th><th>Diameter</th><th>Distance</th><th>Period</th><th>Gravity</th></tr></thead><tbody>{[...PLANET_ORDER, "Moon" as const].map((id) => { const b = BODIES[id]; return <tr key={id} className="mf-mono"><td className="py-1 font-sans">{id}</td><td>{fmt(b.diameterKm)} km</td><td>{id === "Moon" ? "384,400 km" : `${b.au} AU`}</td><td>{b.periodDays} d</td><td>{b.gravity} m/s²</td></tr>; })}</tbody></table>
+        <table className="w-full text-left text-[13px]"><thead className="text-muted-foreground"><tr><th className="py-1">Body</th><th>Diameter</th><th>Distance</th><th>Period</th><th>Gravity</th></tr></thead><tbody>{[...PLANET_ORDER, "Moon" as const].map((id) => { const b = BODIES[id]; return <tr key={id} className="mf-mono"><td className="py-1 font-sans text-cyan-300">{id}</td><td>{fmt(b.diameterKm)} km</td><td>{id === "Moon" ? "384,400 km" : `${b.au} AU`}</td><td>{b.periodDays} d</td><td>{b.gravity} m/s²</td></tr>; })}</tbody></table>
         <ul className="mt-4 space-y-1 text-[10.5px] text-muted-foreground">{Object.values(SOURCES).map((x) => <li key={x}>• {x}</li>)}</ul>
       </Modal>}
-      {modal === "settings" && <Modal title="Settings" onClose={() => setModal(null)}>
-        <div className="space-y-2"><Toggle label="High graphics quality" sub="Sharper rendering; turn off on slower phones" on={s.quality === "high"} onClick={() => s.set({ quality: s.quality === "high" ? "low" : "high" })} />
-          <Btn tone="danger" className="mt-3" icon={<RefreshCcw size={14} />} onClick={() => { localStorage.removeItem("mission-forge-v3"); location.reload(); }}>Reset all progress</Btn></div>
+
+      {modal === "settings" && <Modal title="System Settings" onClose={() => setModal(null)}>
+        <div className="space-y-3">
+          <Toggle label="High graphics quality" sub="Sharper PBR textures; turn off on slower phones" on={s.quality === "high"} onClick={() => s.set({ quality: s.quality === "high" ? "low" : "high" })} />
+          <Toggle label="Audio Voice Mentor (Ayesha)" sub="Real-time speech synthesis guidance for STEM missions" on={!s.muted} onClick={() => s.set({ muted: !s.muted })} />
+          <Toggle label="Closed Captions HUD" sub="Display live text subtitles for audio briefings" on={s.captions} onClick={() => s.set({ captions: !s.captions })} />
+          <Btn tone="danger" className="mt-4 w-full" icon={<RefreshCcw size={14} />} onClick={() => { localStorage.clear(); location.reload(); }}>Reset Mission Progress</Btn>
+        </div>
       </Modal>}
     </div>
   );
@@ -173,8 +266,18 @@ function CheckS() {
 
 function LaunchHud() {
   useTick(8); const s = useMissionStore(); const t = rt.launchT; const p = launchProfile(t);
-  const steps: [number, string][] = [[0, "Systems go"], [3, "Fueling"], [LIFT - 6.6, "Engine start"], [LIFT, "Liftoff"], [18, "Booster separation"], [25, "Core separation"], [28, "Orbit insertion"], [29, "Solar array deploy"]];
-  const inOrbit = t > 33;
+  const steps: [number, string][] = [
+    [0, "Systems go"],
+    [3, "Fueling"],
+    [LIFT - 6.6, "Engine start"],
+    [LIFT, "Liftoff"],
+    [18, "Booster staging"],
+    [23, "Fairing jettison"],
+    [27, "Spacecraft separation"],
+    [32, "Orbit insertion"],
+    [33, "Solar array deploy"],
+  ];
+  const inOrbit = t > 32;
   const target = MISSIONS[s.mission].body;
   return (
     <>
@@ -182,9 +285,9 @@ function LaunchHud() {
       <Sheet>
         <div className="space-y-1.5">{steps.map(([at, l]) => <div key={l} className={`flex items-center gap-2 text-xs ${t >= at ? "text-foreground" : "text-muted-foreground/60"}`}><span className={`grid size-4 place-items-center rounded-full ${t >= at ? "bg-success/25 text-success" : "bg-secondary"}`}>{t >= at && <Check size={10} />}</span>{l}</div>)}</div>
         <div className="mt-3 grid grid-cols-2 gap-2"><Row k="Altitude" v={`${p.altKm.toFixed(1)} km`} /><Row k="Velocity" v={`${p.velKms.toFixed(2)} km/s`} /></div>
-        <Tip>{inOrbit ? "In orbit at ~7.8 km/s. The Orion service module's four solar wings unfold once the fairings are gone." : "SLS Block 1 produces 8.8 million pounds of thrust at liftoff — 4 RS-25 engines plus 2 solid rocket boosters."}</Tip>
+        <Tip>{inOrbit ? "In orbit at ~7.8 km/s. The spacecraft solar arrays unfold once the fairings and booster adapter are cleared." : "Saturn V / SLS produces over 8.8 million pounds of thrust at liftoff — climbing through max Q into orbital trajectory."}</Tip>
         <div className="mt-3 flex justify-end gap-2">
-          {!inOrbit && <Btn tone="ghost" icon={<FastForward size={14} />} onClick={() => { rt.launchT = 28; }}>Skip to orbit</Btn>}
+          {!inOrbit && <Btn tone="ghost" icon={<FastForward size={14} />} onClick={() => { rt.launchT = 32; }}>Skip to orbit</Btn>}
           {inOrbit && <Btn icon={<FlameIcon size={14} />} onClick={() => { rt.departDays = rt.days; rt.progress = 0; rt.warp = 1; s.say(target === "Moon" ? "Trans-lunar injection burn" : `Trans-${target} injection burn`, "warn"); s.go("flight"); }}>{target === "Moon" ? "Trans-lunar injection" : "Injection burn"}</Btn>}
         </div>
       </Sheet>
@@ -273,17 +376,60 @@ function Encounter() {
   );
 }
 
-function Failure() {
+function Failure({ onOpenAcademy }: { onOpenAcademy?: (lessonId?: string) => void }) {
   const s = useMissionStore(); const o = s.outcome; if (!o) return null;
+  const a = analyze(designOf(s));
+  const autopsy = generateMissionAutopsy({
+    success: false,
+    reason: o.log,
+    dvMargin: a.dvMargin,
+    powerDeficit: o.causes.includes("power"),
+    commsLost: o.causes.includes("comms"),
+    heatExceeded: o.causes.includes("shield"),
+  });
   const timeline = [["Decision", `Chose "${o.choice}"`, "T-0:45"], ["Impact", o.log, "T-0:30"], ...o.causes.map((c, i) => ["Critical", CAUSE_TEXT[c] ?? c, `T-0:${String(15 - i * 5).padStart(2, "0")}`]), ["Failure", "Mission objective at risk", "T-0:00"]];
   return (
     <Sheet>
-      <div className="mb-3 flex items-center gap-2 rounded-lg bg-danger/20 px-3 py-2 text-sm font-bold text-danger"><AlertTriangle size={16} />Mission failure — {CAUSE_TEXT[o.causes[0] ?? ""]}</div>
+      <div className={`mb-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold ${s.userMode === "kid" ? "bg-amber-500/20 text-amber-300 border border-amber-400/40 font-kid" : "bg-danger/20 text-danger"}`}>
+        {s.userMode === "kid" ? <span className="text-base">🛠️</span> : <AlertTriangle size={16} />}
+        <span>
+          {s.userMode === "kid"
+            ? "Mission Learning Moment 🛠 — Let's fix it together!"
+            : `Mission failure — ${CAUSE_TEXT[o.causes[0] ?? ""]}`}
+        </span>
+      </div>
+      
+      {/* Educational Autopsy Diagnosis */}
+      <div className="mb-3 p-3 rounded-xl border border-cyan-500/30 bg-cyan-950/30 text-xs space-y-2">
+        <div className="flex items-center justify-between font-mono text-cyan-400 font-bold uppercase text-[11px]">
+          <span>🔬 Science Autopsy</span>
+          <span className="text-[9px] text-slate-400">{autopsy.status}</span>
+        </div>
+        <p className="text-slate-200 leading-relaxed text-[12px]">{autopsy.diagnostic}</p>
+        {autopsy.fixAdvice && (
+          <p className="text-cyan-300 text-[11px]">💡 Advice: {autopsy.fixAdvice}</p>
+        )}
+        {onOpenAcademy && (
+          <button
+            onClick={() => onOpenAcademy(autopsy.recommendedLessonId)}
+            className="w-full mt-1 py-1.5 px-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
+          >
+            <GraduationCap size={14} />
+            <span>Master Concept in Academy →</span>
+          </button>
+        )}
+      </div>
+
       <h4 className="mb-1 text-[13px] uppercase tracking-widest text-muted-foreground">Cause analysis</h4>
       <ul className="space-y-1 text-[13px]">{o.causes.map((c) => <li key={c}>• <span className="text-danger">{CAUSE_TEXT[c]}</span> — {ROOT_CAUSE[c]}</li>)}</ul>
       <h4 className="mb-1 mt-3 text-[13px] uppercase tracking-widest text-muted-foreground">Black box timeline</h4>
       <div className="space-y-1">{timeline.map(([k, v, t], i) => <div key={i} className="flex gap-2 text-[13px]"><span className="mt-1 size-2 shrink-0 rounded-full bg-danger" /><span className="flex-1"><b className="text-danger">{k}</b> <span className="text-muted-foreground">{v}</span></span><span className="mf-mono text-muted-foreground">{t}</span></div>)}</div>
-      <Nav back={() => { s.newRun("build"); }} backLabel="Redesign" next={() => s.go("rescue")} nextLabel="Plan rescue" />
+      <Nav
+        back={() => { s.newRun("build"); }}
+        backLabel={s.userMode === "kid" ? "Try Redesign 🚀" : "Redesign"}
+        next={() => s.go("rescue")}
+        nextLabel={s.userMode === "kid" ? "Plan Rescue 🤖" : "Plan rescue"}
+      />
     </Sheet>
   );
 }
@@ -329,7 +475,7 @@ function Landing() {
       <div className="grid gap-1.5">{order.map((i) => <button key={i} disabled={done || i < s.landing} onClick={() => { if (i === s.landing) { s.set({ landing: s.landing + 1 }); s.say(`${stages[i]}`, "ok"); setMsg(i === stages.length - 1 ? "exp.stageDone" : "exp.stageHint"); } else { s.set({ landingErrors: s.landingErrors + 1 }); s.say(`Wrong order: ${stages[i]}`, "danger"); setMsg("exp.stageWrong"); } }} className={`flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs ${s.landing > i ? "bg-success/15 text-success" : "bg-secondary/60 hover:bg-secondary"}`}>{stages[i]}{s.landing > i && <Check size={13} />}</button>)}</div>
       <div className="mt-3 grid grid-cols-2 gap-2"><Row k={t("exp.descent")} v={`${Math.round(s.landing / stages.length * 100)}%`} /><Row k="Errors" v={s.landingErrors} tone={s.landingErrors ? "text-danger" : "text-success"} /></div>
       <Tip>{BODIES[body].atmosphere === "none" ? `${body} has no atmosphere: parachutes don't work, so engines do all the braking.` : BODIES[body].atmosphere === "gas" ? `${body} has no solid surface, so a probe sends data back until the pressure crushes it.` : "Mars' atmosphere is only ~1% of Earth's, so parachutes slow you down but engines finish the job."}</Tip>
-      {done && <Nav next={() => s.go("report")} nextLabel="Mission report" />}
+      {done && <Nav next={() => s.go(s.mission === "Moon" ? "lunar-recon" : "report")} nextLabel={s.mission === "Moon" ? "Deploy lunar survey" : "Mission report"} />}
     </Sheet>
   );
 }
@@ -340,16 +486,29 @@ function Report() {
   return (
     <Sheet>
       <div className="flex items-center gap-4"><div className="grid size-24 shrink-0 place-items-center rounded-full bg-primary/15 shadow-[0_0_40px_color-mix(in_oklab,var(--primary)_35%,transparent)]"><div className="text-center"><b className="mf-mono text-3xl">{sc.total}</b><span className="block text-[8px] uppercase tracking-widest text-muted-foreground">Score</span></div></div><div><div className={`text-sm font-bold uppercase tracking-widest ${s.outcome?.failed && !s.rescued ? "text-danger" : "text-success"}`}>{s.outcome?.failed ? (s.rescued ? "Recovered" : "Lost") : "Success"}</div><div className="text-[13px] text-muted-foreground">{MISSIONS[s.mission].title} · {a.days} days</div></div></div>
+      {s.lunarSurveyCompleted && (
+        <div className="mt-3 rounded-lg border border-primary/40 bg-primary/10 p-2.5 text-xs">
+          <div className="flex items-center gap-1.5 font-bold text-cyan-soft">
+            <Check size={14} className="text-success" />
+            <span>Lunar Reconnaissance Data Acquired</span>
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">{s.lunarSurveyData?.description || "Surface volatiles and potential water ice verified."}</p>
+        </div>
+      )}
       <div className="mt-3 space-y-2">{([["Objective", sc.objective], ["Science", sc.science], ["Safety", sc.safety], ["Resources", sc.resources], ["Landing", sc.landing]] as const).map(([k, v]) => <Bar key={k} label={k} value={v} tone={toneOf(v, 75, 45)} />)}</div>
       <ul className="mt-3 space-y-1.5 text-[13px] text-muted-foreground">{lessons.map((l) => <li key={l} className="flex gap-2"><Check size={13} className="mt-0.5 shrink-0 text-success" />{l}</li>)}</ul>
-      <div className="mt-4 flex flex-wrap justify-end gap-2"><Btn tone="ghost" onClick={() => s.newRun("missions")}>New destination</Btn><Btn icon={<RefreshCcw size={14} />} onClick={() => s.newRun("build")}>Redesign & retry</Btn></div>
+      <div className="mt-4 flex flex-wrap justify-end gap-2"><Btn tone="primary" icon={<Rocket size={14} />} onClick={() => s.go("menu")}>Mission Control</Btn><Btn tone="ghost" onClick={() => s.newRun("missions")}>New destination</Btn><Btn icon={<RefreshCcw size={14} />} onClick={() => s.newRun("build")}>Redesign & retry</Btn></div>
     </Sheet>
   );
 }
 
-// ---------------- Layout ----------------
+// ---------------- Layout (One-sided Compact Non-Obstructive Dock) ----------------
 function Sheet({ children, wide = false, className = "" }: { children: ReactNode; wide?: boolean; className?: string }) {
-  return <div className={`mf-operation-sheet absolute inset-x-2 bottom-2 max-h-[58%] overflow-y-auto sm:inset-x-auto sm:bottom-4 sm:right-4 sm:top-16 sm:max-h-none ${wide ? "sm:w-[24rem]" : "sm:w-[21rem]"} ${className}`}><Panel>{children}</Panel></div>;
+  return (
+    <div className={`pointer-events-auto absolute right-2 bottom-16 sm:bottom-4 sm:right-4 sm:top-14 z-10 w-[320px] max-w-[88vw] max-h-[64%] sm:max-h-[82%] overflow-y-auto rounded-2xl border border-[#162746] bg-[#081226]/95 p-3.5 sm:p-4 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] scrollbar-thin ${className}`}>
+      {children}
+    </div>
+  );
 }
 function Nav({ back, next, nextLabel = "Next", backLabel = "Back", disabled }: { back?: () => void; next?: () => void; nextLabel?: string; backLabel?: string; disabled?: boolean | undefined }) {
   return <div className="mt-4 flex justify-between gap-2">{back ? <Btn tone="ghost" icon={<ArrowLeft size={14} />} onClick={back}>{backLabel}</Btn> : <span />}{next && <Btn onClick={next} disabled={disabled}>{nextLabel}<ArrowRight size={14} /></Btn>}</div>;
@@ -358,19 +517,137 @@ function Nav({ back, next, nextLabel = "Next", backLabel = "Back", disabled }: {
 export function Hud() {
   const { t } = useTranslation();
   const phase = useMissionStore((s) => s.phase), go = useMissionStore((s) => s.go);
-  const screens: Partial<Record<Phase, ReactNode>> = { check: <ReadinessPanel />, launch: <LaunchHud />, flight: <Flight />, encounter: <Encounter />, failure: <Failure />, rescue: <Rescue />, docking: <Docking />, landing: <Landing />, report: <MissionReport /> };
-  if (["menu", "missions", "brief", "route", "routePreview", "objectives", "budget", "fuel", "power", "comms", "instruments", "overview", "craft", "build"].includes(phase)) return <GameScreens phase={phase} />;
+  const userMode = useMissionStore((s) => s.userMode);
+  const [hideSheet, setHideSheet] = useState(false);
+  const [academyOpen, setAcademyOpen] = useState(false);
+  const [academyLessonId, setAcademyLessonId] = useState<string | undefined>(undefined);
+
+  const handleOpenAcademy = (lessonId?: string) => {
+    setAcademyLessonId(lessonId);
+    setAcademyOpen(true);
+  };
+
+  // Desktop Keyboard Shortcuts & Mobile WakeLock (Document 19)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.code === "KeyM") {
+        const s = useMissionStore.getState();
+        s.set({ muted: !s.muted });
+        s.say(!s.muted ? "Audio unmuted" : "Audio muted", "info");
+      } else if (e.code === "KeyH") {
+        setAcademyOpen((v) => !v);
+      } else if (e.code === "KeyK") {
+        const s = useMissionStore.getState();
+        const next = s.userMode === "kid" ? "cadet" : "kid";
+        s.setUserMode(next);
+        s.say(`Mode: ${next.toUpperCase()}`, "ok");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Screen WakeLock during deep space flight to prevent phone dimming
+  useEffect(() => {
+    let lock: any = null;
+    if (typeof navigator !== "undefined" && "wakeLock" in navigator && (phase === "flight" || phase === "encounter" || phase === "launch")) {
+      navigator.wakeLock.request("screen").then((l) => {
+        lock = l;
+      }).catch(() => {});
+    }
+    return () => {
+      if (lock) lock.release().catch(() => {});
+    };
+  }, [phase]);
+
+  const screens: Partial<Record<Phase, ReactNode>> = {
+    check: <ReadinessPanel />,
+    launch: <LaunchHud />,
+    flight: <Flight />,
+    encounter: <Encounter />,
+    failure: <Failure onOpenAcademy={handleOpenAcademy} />,
+    rescue: <Rescue />,
+    docking: <Docking />,
+    landing: <Landing />,
+    report: <MissionReport />,
+  };
+  
+  if (phase === "menu") return <AAALobbyHUD />;
+  if (["missions", "brief", "route", "routePreview", "objectives", "budget", "fuel", "power", "comms", "instruments", "overview", "craft", "build"].includes(phase)) return <GameScreens phase={phase} />;
+
   return (
-    <div className="mf-operational pointer-events-none absolute inset-0 z-10 text-foreground">
-      {(
-        <div className="absolute inset-x-2 top-2 flex items-start justify-between gap-2 sm:inset-x-4 sm:top-4">
-          <div className="pointer-events-auto flex items-center gap-3"><button aria-label="Main menu" onClick={() => go("menu")}><Logo /></button><span className="hidden text-[13px] font-bold uppercase tracking-[0.2em] text-cyan-soft sm:inline">{t(`exp.${phase === "launch" ? "launchPhase" : phase}`)}</span></div>
-          <StatusFeed />
-        </div>
+    <div className={`mf-operational pointer-events-none absolute inset-0 z-10 text-foreground ${userMode === "kid" ? "font-kid" : ""}`}>
+      {/* Top Orbital Mission Map Bar */}
+      <MissionTopMap
+        onToggleOverlay={() => setHideSheet(!hideSheet)}
+        isOverlayHidden={hideSheet}
+        onOpenAcademy={() => handleOpenAcademy(undefined)}
+      />
+
+      {/* Academy & STEM Lessons Modal */}
+      <CurriculumModal
+        isOpen={academyOpen}
+        onClose={() => setAcademyOpen(false)}
+        initialLessonId={academyLessonId}
+      />
+
+      {/* Screen Content or Minimized Floating Button */}
+      {!hideSheet ? (
+        screens[phase]
+      ) : (
+        <button
+          onClick={() => setHideSheet(false)}
+          className="pointer-events-auto absolute right-3 bottom-16 sm:bottom-4 z-20 flex items-center gap-2 rounded-xl border border-[#00F0FF]/50 bg-[#081226]/95 px-3.5 py-2 text-xs font-bold uppercase text-[#00F0FF] backdrop-blur-xl shadow-[0_0_20px_rgba(53,185,255,0.3)] transition active:scale-95 cursor-pointer"
+        >
+          <Eye size={14} className="animate-pulse text-[#00F0FF]" />
+          <span>SHOW MISSION CONTROLS</span>
+        </button>
       )}
-      {screens[phase]}
-      {<div className="absolute left-3 top-14 text-[13px] font-bold uppercase tracking-[0.2em] text-cyan-soft sm:hidden">{t(`exp.${phase === "launch" ? "launchPhase" : phase}`)}</div>}
+
       {(phase === "flight" || phase === "encounter") && useMissionStore.getState().cam === "cockpit" && <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-primary/70"><Crosshair size={28} /></div>}
+
+      {/* Mobile Full-View Navigation Dock */}
+      <div className="pointer-events-auto fixed bottom-2 inset-x-2 z-20 sm:hidden flex items-center justify-around rounded-2xl border border-[#162746] bg-[#050B18]/95 py-2 px-3 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.85)]">
+        <button
+          onClick={() => go("menu")}
+          className="flex flex-col items-center gap-0.5 text-[10px] font-bold text-[#A6B4C8] active:text-[#00F0FF] cursor-pointer"
+        >
+          <Rocket size={16} className="text-[#00F0FF]" />
+          <span>Menu</span>
+        </button>
+        <button
+          onClick={() => go("missions")}
+          className="flex flex-col items-center gap-0.5 text-[10px] font-bold text-[#A6B4C8] active:text-[#00F0FF] cursor-pointer"
+        >
+          <Compass size={16} className="text-[#00F0FF]" />
+          <span>Targets</span>
+        </button>
+        <button
+          onClick={() => go("build")}
+          className="flex flex-col items-center gap-0.5 text-[10px] font-bold text-[#A6B4C8] active:text-[#00F0FF] cursor-pointer"
+        >
+          <Wrench size={16} className="text-[#00F0FF]" />
+          <span>Forge</span>
+        </button>
+        <button
+          onClick={() => go("check")}
+          className="flex flex-col items-center gap-0.5 text-[10px] font-bold text-[#A6B4C8] active:text-[#35D39A] cursor-pointer"
+        >
+          <ShieldCheck size={16} className="text-[#35D39A]" />
+          <span>Poll</span>
+        </button>
+        <button
+          onClick={() => {
+            const s = useMissionStore.getState();
+            s.set({ muted: !s.muted });
+          }}
+          className="flex flex-col items-center gap-0.5 text-[10px] font-bold text-[#A6B4C8] active:text-[#FFB547] cursor-pointer"
+        >
+          <Zap size={16} className="text-[#FFB547]" />
+          <span>Audio</span>
+        </button>
+      </div>
     </div>
   );
 }
